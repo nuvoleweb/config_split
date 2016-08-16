@@ -1,0 +1,24 @@
+config_extra.settings:
+  type: config_object
+  label: 'Config Filter settings'
+  mapping:
+    folder:
+      type: string
+      label: 'Folder'
+    module:
+      type: sequence
+      label: 'Filtered modules'
+      sequence:
+        type: integer
+        label: 'Weight'
+    theme:
+      type: sequence
+      label: 'Filtered themes'
+      sequence:
+        type: integer
+        label: 'Weight'
+    blacklist:
+      type: sequence
+      label: 'Filtered configuration'
+      sequence:
+        type: string

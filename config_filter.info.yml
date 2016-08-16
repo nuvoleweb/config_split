@@ -1,0 +1,7 @@
+name: Config filter
+type: module
+description: Configuration filter for importing and exporting extra config
+core: 8.x
+package: Other
+dependencies:
+  - config
