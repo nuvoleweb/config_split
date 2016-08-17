@@ -7,6 +7,7 @@ use Drupal\config_filter\Config\StorageWrapper;
 use Drupal\Core\Config\ConfigManagerInterface;
 use Drupal\Core\Config\FileStorage;
 use Drupal\Core\Config\ImmutableConfig;
+use Drupal\Core\Config\StorageInterface;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -45,24 +46,39 @@ class ExportCommand extends Command
     if (!$directory) {
       $directory = config_get_config_directory(CONFIG_SYNC_DIRECTORY);
     }
+    /** @var ConfigManagerInterface $configManager */
+    $configManager = $this->getDrupalService('config.manager');
+    /** @var ImmutableConfig $filterConfig */
+    $filterConfig = \Drupal::config('config_filter.settings');
 
     try {
-      /** @var ConfigManagerInterface $configManager */
-      $configManager = $this->getDrupalService('config.manager');
-      /** @var ImmutableConfig $filterConfig */
-      $filterConfig = \Drupal::config('config_filter.settings');
-
       $primary_storage = new FileStorage($directory);
       $secondary_storage = new FileStorage($filterConfig->get('folder'));
       $configFilter = new SplitFilter($filterConfig, $configManager, $secondary_storage);
 
-      $export_storage = new StorageWrapper($primary_storage, $configFilter);
+      /** @var StorageInterface $source_storage */
+      $source_storage = \Drupal::service('config.storage');
+      $destination_storage = new StorageWrapper($primary_storage, $configFilter);
       // Remove everything in the storage and write it again.
-      $export_storage->deleteAll();
+      $destination_storage->deleteAll();
       $secondary_storage->deleteAll();
-      foreach ($configManager->getConfigFactory()->listAll() as $name) {
-        // Get raw configuration data without overrides.
-        $export_storage->write($name, $configManager->getConfigFactory()->get($name)->getRawData());
+      foreach ($source_storage->listAll() as $name) {
+        $destination_storage->write($name, $source_storage->read($name));
+      }
+
+      // Export configuration collections.
+      foreach (\Drupal::service('config.storage')->getAllCollectionNames() as $collection) {
+        $collection_source_storage = $source_storage->createCollection($collection);
+        $collection_destination_storage = $destination_storage->createCollection($collection);
+        try {
+          $collection_destination_storage->deleteAll();
+        }
+        catch (\UnexpectedValueException $e) {
+          // The folder doesn't exist yet.
+        }
+        foreach ($collection_source_storage->listAll() as $name) {
+          $collection_destination_storage->write($name, $collection_source_storage->read($name));
+        }
       }
 
     } catch (\Exception $e) {
@@ -71,5 +87,6 @@ class ExportCommand extends Command
 
     $io->success($this->trans('commands.config.export.messages.directory'));
     $io->simple($directory);
+    $io->simple($filterConfig->get('folder'));
   }
 }
