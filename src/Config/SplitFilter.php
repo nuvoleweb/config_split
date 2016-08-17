@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: fabian
- * Date: 16.08.16
- * Time: 08:44
- */
 
 namespace Drupal\config_filter\Config;
 
@@ -13,10 +7,15 @@ use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigManagerInterface;
 use Drupal\Core\Config\StorageInterface;
 
+/**
+ * Class SplitFilter.
+ *
+ * @package Drupal\config_filter\Config
+ */
 class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
 
   /**
-   * The modules configuration.
+   * The configuration for the filter.
    *
    * @var \Drupal\Core\Config\Config
    */
@@ -31,7 +30,7 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
 
   /**
    * The storage for the config which is not part of the directory to sync.
-   * 
+   *
    * @var \Drupal\Core\Config\StorageInterface
    */
   protected $secondaryStorage;
@@ -42,7 +41,17 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
    * @var string[]
    */
   protected $blacklist;
-  
+
+  /**
+   * SplitFilter constructor.
+   *
+   * @param \Drupal\Core\Config\Config $config
+   *   The filter config that has 'blacklist', 'module', and 'theme'.
+   * @param \Drupal\Core\Config\ConfigManagerInterface $manager
+   *   The config manager for retrieving dependent config.
+   * @param \Drupal\Core\Config\StorageInterface|NULL $secondary
+   *   The config storage for the blacklisted config.
+   */
   public function __construct(Config $config, ConfigManagerInterface $manager, StorageInterface $secondary = NULL) {
     $this->config = $config;
     $this->manager = $manager;
@@ -67,7 +76,7 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
       return FALSE;
     }));
     // Finally merge all dependencies of the blacklisted config.
-    $this->blacklist = array_merge($blacklist, array_keys($manager->findConfigEntityDependents('config', $blacklist)));
+    $this->blacklist = array_unique(array_merge($blacklist, array_keys($manager->findConfigEntityDependents('config', $blacklist))));
   }
 
   /**
@@ -86,9 +95,11 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
     $data['theme'] = array_merge($data['theme'], $this->config->get('theme'));
     // Sort the modules.
     uksort($data['module'], function ($a, $b) use ($data) {
+      // Sort by module weight, this assumes the schema of core.extensions.
       if ($data['module'][$a] != $data['module'][$b]) {
         return $data['module'][$a] > $data['module'][$b] ? 1 : -1;
       }
+      // Or sort by module name.
       return $a > $b ? 1 : -1;
     });
     return $data;
@@ -126,8 +137,9 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
    * {@inheritdoc}
    */
   public function filterDelete($name, $success) {
-    if (!$success && $this->secondaryStorage) {
-      $success = $this->secondaryStorage->delete($name);
+    if ($this->secondaryStorage) {
+      // Call delete on the secondary storage anyway.
+      return $this->secondaryStorage->delete($name) || $success;
     }
     return $success;
   }
