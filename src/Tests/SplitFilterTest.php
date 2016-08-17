@@ -4,6 +4,7 @@ namespace Drupal\config_filter\Tests;
 
 
 use Drupal\config_filter\Config\SplitFilter;
+use Drupal\Core\Config\NullStorage;
 use Drupal\Core\Config\StorageInterface;
 use \Drupal\Tests\UnitTestCase;
 use Prophecy\Argument;
@@ -192,6 +193,22 @@ class SplitFilterTest extends UnitTestCase{
     $this->assertFalse($filter->filterDelete('No', FALSE));
   }
 
+  public function testFilterReadMultiple() {
+    // Set up random config storage.
+    $primary = (array) $this->getRandomGenerator()->object(rand(3, 10));
+    $secondary = (array) $this->getRandomGenerator()->object(rand(3, 10));
+    $merged = array_merge($primary, $secondary);
+    $storage = $this->prophesize('Drupal\Core\Config\StorageInterface');
+    $storage->readMultiple(Argument::cetera())->willReturn($secondary);
+
+    $transparent = $this->getFilter(NULL);
+    $filter = $this->getFilter($storage->reveal());
+
+    // Test listing config.
+    $this->assertArrayEquals($primary, $transparent->filterReadMultiple(array_keys($merged), $primary));
+    $this->assertArrayEquals($merged, $filter->filterReadMultiple(array_keys($merged), $primary));
+  }
+
   public function testFilterListAll() {
     // Set up random config storage.
     $primary = (array) $this->getRandomGenerator()->object(rand(3, 10));
@@ -203,8 +220,46 @@ class SplitFilterTest extends UnitTestCase{
     $filter = $this->getFilter($storage);
 
     // Test listing config.
-    $this->assertArrayEquals(array_keys($primary), $transparent->filterListAll(array_keys($primary)));
-    $this->assertArrayEquals(array_keys($merged), $filter->filterListAll(array_keys($primary)));
+    $this->assertArrayEquals(array_keys($primary), $transparent->filterListAll('', array_keys($primary)));
+    $this->assertArrayEquals(array_keys($merged), $filter->filterListAll('', array_keys($primary)));
+  }
+
+  public function testFilterDeleteAll() {
+    $storage = $this->prophesize('Drupal\Core\Config\StorageInterface');
+    $storage->deleteAll('Yes')->willReturn(TRUE);
+    $storage->deleteAll('No')->willReturn(FALSE);
+
+    $transparent = $this->getFilter(NULL);
+    $filter = $this->getFilter($storage->reveal());
+
+    $this->assertTrue($transparent->filterDeleteAll('Yes', TRUE));
+    $this->assertTrue($transparent->filterDeleteAll('No', TRUE));
+    $this->assertFalse($transparent->filterDeleteAll('Yes', FALSE));
+    $this->assertFalse($transparent->filterDeleteAll('No', FALSE));
+
+    $this->assertTrue($filter->filterDeleteAll('Yes', TRUE));
+    $this->assertTrue($filter->filterDeleteAll('No', TRUE));
+    $this->assertTrue($filter->filterDeleteAll('Yes', FALSE));
+    $this->assertFalse($filter->filterDeleteAll('No', FALSE));
+  }
+
+  public function testFilterCreateCollection() {
+    $collection = $this->randomMachineName();
+    $collection_storage = new NullStorage();
+    $storage = $this->prophesize('Drupal\Core\Config\StorageInterface');
+    $storage->createCollection($collection)->willReturn($collection_storage);
+
+    $transparent = $this->getFilter(NULL);
+    $this->assertEquals($transparent, $transparent->filterCreateCollection($collection));
+
+    $filter = $this->getFilter($storage->reveal());
+    $new_filter = $filter->filterCreateCollection($collection);
+
+    // Get the protected storage property.
+    $internal = new \ReflectionProperty('Drupal\config_filter\Config\SplitFilter', 'secondaryStorage');
+    $internal->setAccessible(TRUE);
+    $actual = $internal->getValue($new_filter);
+    $this->assertEquals($collection_storage, $actual);
   }
 
   /**

@@ -136,22 +136,55 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
   /**
    * {@inheritdoc}
    */
-  public function filterDelete($name, $success) {
-    if ($this->secondaryStorage) {
+  public function filterDelete($name, $delete) {
+    if ($delete && $this->secondaryStorage) {
       // Call delete on the secondary storage anyway.
-      return $this->secondaryStorage->delete($name) || $success;
+      $this->secondaryStorage->delete($name);
     }
-    return $success;
+    return $delete;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function filterListAll($data, $prefix = '') {
+  public function filterReadMultiple(array $names, array $data) {
     if ($this->secondaryStorage) {
-      $data = array_merge($data, $this->secondaryStorage->listAll($prefix));
+      $data = array_merge($data, $this->secondaryStorage->readMultiple($names));
+    }
+    if (in_array('core.extension', $names)) {
+      $data['core.extension'] = $this->filterRead('core.extension', $data['core.extension']);
     }
     return $data;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function filterListAll($prefix, array $data) {
+    if ($this->secondaryStorage) {
+      $data = array_unique(array_merge($data, $this->secondaryStorage->listAll($prefix)));
+    }
+    return $data;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function filterDeleteAll($prefix, $delete) {
+    if ($delete && $this->secondaryStorage) {
+      $this->secondaryStorage->deleteAll($prefix);
+    }
+    return $delete;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function filterCreateCollection($collection) {
+    if ($this->secondaryStorage) {
+      return new static($this->config, $this->manager, $this->secondaryStorage->createCollection($collection));
+    }
+    return $this;
   }
 
 
