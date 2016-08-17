@@ -177,19 +177,14 @@ class SplitFilterTest extends UnitTestCase{
   public function testFilterDelete() {
     $storage = $this->prophesize('Drupal\Core\Config\StorageInterface');
     $storage->delete('Yes')->willReturn(TRUE);
-    $storage->delete('No')->willReturn(FALSE);
 
     $transparent = $this->getFilter(NULL);
     $filter = $this->getFilter($storage->reveal());
 
     $this->assertTrue($transparent->filterDelete('Yes', TRUE));
-    $this->assertTrue($transparent->filterDelete('No', TRUE));
-    $this->assertFalse($transparent->filterDelete('Yes', FALSE));
     $this->assertFalse($transparent->filterDelete('No', FALSE));
 
     $this->assertTrue($filter->filterDelete('Yes', TRUE));
-    $this->assertTrue($filter->filterDelete('No', TRUE));
-    $this->assertTrue($filter->filterDelete('Yes', FALSE));
     $this->assertFalse($filter->filterDelete('No', FALSE));
   }
 
@@ -227,19 +222,14 @@ class SplitFilterTest extends UnitTestCase{
   public function testFilterDeleteAll() {
     $storage = $this->prophesize('Drupal\Core\Config\StorageInterface');
     $storage->deleteAll('Yes')->willReturn(TRUE);
-    $storage->deleteAll('No')->willReturn(FALSE);
 
     $transparent = $this->getFilter(NULL);
     $filter = $this->getFilter($storage->reveal());
 
     $this->assertTrue($transparent->filterDeleteAll('Yes', TRUE));
-    $this->assertTrue($transparent->filterDeleteAll('No', TRUE));
-    $this->assertFalse($transparent->filterDeleteAll('Yes', FALSE));
     $this->assertFalse($transparent->filterDeleteAll('No', FALSE));
 
     $this->assertTrue($filter->filterDeleteAll('Yes', TRUE));
-    $this->assertTrue($filter->filterDeleteAll('No', TRUE));
-    $this->assertTrue($filter->filterDeleteAll('Yes', FALSE));
     $this->assertFalse($filter->filterDeleteAll('No', FALSE));
   }
 
@@ -260,6 +250,19 @@ class SplitFilterTest extends UnitTestCase{
     $internal->setAccessible(TRUE);
     $actual = $internal->getValue($new_filter);
     $this->assertEquals($collection_storage, $actual);
+  }
+
+  public function testFilterGetAllCollectionNames() {
+    $collections = array_keys((array) $this->getRandomGenerator()->object(rand(3, 10)));
+    $extra = array_keys((array) $this->getRandomGenerator()->object(rand(3, 10)));
+    $storage = $this->prophesize('Drupal\Core\Config\StorageInterface');
+    $storage->getAllCollectionNames()->willReturn($extra);
+
+    $transparent = $this->getFilter(NULL);
+    $filter = $this->getFilter($storage->reveal());
+
+    $this->assertArrayEquals($collections, $transparent->filterGetAllCollectionNames($collections));
+    $this->assertArrayEquals(array_merge($collections, $extra), $filter->filterGetAllCollectionNames($collections));
   }
 
   /**

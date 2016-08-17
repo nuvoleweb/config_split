@@ -187,5 +187,14 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
     return $this;
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function filterGetAllCollectionNames($collections) {
+    if ($this->secondaryStorage) {
+      $collections = array_merge($collections, $this->secondaryStorage->getAllCollectionNames());
+    }
+    return $collections;
+  }
 
 }
