@@ -1,0 +1,10 @@
+config_filter.settings:
+  path: 'admin/config/development/configuration/config_filter'
+  defaults:
+    _form: '\Drupal\config_filter\Form\SettingsConfigForm'
+    _title: 'Configuration Filter Form'
+  requirements:
+    _permission: 'administer site configuration'
+  options:
+    _admin_route: TRUE
+

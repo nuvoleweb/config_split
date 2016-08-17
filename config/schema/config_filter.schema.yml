@@ -1,4 +1,4 @@
-config_extra.settings:
+config_filter.settings:
   type: config_object
   label: 'Config Filter settings'
   mapping:
