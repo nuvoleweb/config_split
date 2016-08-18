@@ -64,7 +64,7 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
     if ($themes = array_keys($config->get('theme'))) {
       $blacklist = array_merge($blacklist, array_keys($manager->findConfigEntityDependents('theme', $themes)));
     }
-    $extensions = array_merge($modules, $themes);
+    $extensions = array_merge([], $modules, $themes);
     $blacklist = array_merge($blacklist, array_filter($manager->getConfigFactory()->listAll(), function ($name) use ($extensions) {
       // Filter the list of config objects since they are not included in
       // findConfigEntityDependents.
