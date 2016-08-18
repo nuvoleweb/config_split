@@ -1,16 +1,16 @@
 <?php
 
-namespace Drupal\config_filter\Tests;
+namespace Drupal\config_split\Tests;
 
 
-use Drupal\config_filter\Config\StorageFilterBase;
-use Drupal\config_filter\Config\StorageWrapper;
+use Drupal\config_split\Config\StorageFilterBase;
+use Drupal\config_split\Config\StorageWrapper;
 use Drupal\KernelTests\Core\Config\Storage\CachedStorageTest;
 
 /**
  * Tests StorageWrapper operations using the CachedStorage.
  *
- * @group config_filter
+ * @group config_split
  */
 class StorageWrapperTest extends CachedStorageTest {
 

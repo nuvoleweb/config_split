@@ -1,9 +1,9 @@
 <?php
 
-namespace Drupal\config_filter\Command;
+namespace Drupal\config_split\Command;
 
-use Drupal\config_filter\Config\SplitFilter;
-use Drupal\config_filter\Config\StorageWrapper;
+use Drupal\config_split\Config\SplitFilter;
+use Drupal\config_split\Config\StorageWrapper;
 use Drupal\Core\Config\ConfigManagerInterface;
 use Drupal\Core\Config\ImmutableConfig;
 use Symfony\Component\Console\Input\InputOption;
@@ -26,8 +26,8 @@ class ImportCommand extends Command
   protected function configure()
   {
     $this
-      ->setName('configfilter:import')
-      ->setDescription($this->trans('commands.configextra.import.description'))
+      ->setName('config_split:import')
+      ->setDescription($this->trans('commands.config_split.import.description'))
       ->addOption(
         'directory',
         null,
@@ -53,14 +53,14 @@ class ImportCommand extends Command
     /** @var ConfigManagerInterface $config_manager */
     $config_manager = $this->getDrupalService('config.manager');
     /** @var ImmutableConfig $filter_config */
-    $filter_config = \Drupal::config('config_filter.settings');
+    $filter_config = \Drupal::config('config_split.settings');
 
     $active_storage = \Drupal::service('config.storage');
     $source_storage = new FileStorage($directory);
     $secondary_storage = new FileStorage($filter_config->get('folder'));
 
-    $config_filter = new SplitFilter($filter_config, $config_manager, $secondary_storage);
-    $import_storage = new StorageWrapper($source_storage, $config_filter);
+    $config_split = new SplitFilter($filter_config, $config_manager, $secondary_storage);
+    $import_storage = new StorageWrapper($source_storage, $config_split);
 
     $storage_comparer = new StorageComparer($import_storage, $active_storage, $config_manager);
 

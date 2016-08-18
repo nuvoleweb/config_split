@@ -5,7 +5,7 @@
  * Definition of Drush\Config\StorageFilter.
  */
 
-namespace Drupal\config_filter\Config;
+namespace Drupal\config_split\Config;
 
 use Drupal\Core\Config\StorageInterface;
 
@@ -146,7 +146,7 @@ interface StorageFilterInterface {
    *   configuration in a way that allows retrieval of configuration for a
    *   particular collection.
    *
-   * @return \Drupal\config_filter\Config\StorageFilterInterface|NULL
+   * @return \Drupal\config_split\Config\StorageFilterInterface|NULL
    *   Return a filter that should participate in the collection. This is
    *   allows filters to act on different collections.
    */

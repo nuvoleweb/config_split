@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\config_filter\Config;
+namespace Drupal\config_split\Config;
 
 
 use Drupal\Core\Config\StorageInterface;

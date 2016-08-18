@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\config_filter\Form;
+namespace Drupal\config_split\Form;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
@@ -12,7 +12,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * Class SettingsConfigForm.
  *
- * @package Drupal\config_filter\Form
+ * @package Drupal\config_split\Form
  */
 class SettingsConfigForm extends ConfigFormBase {
 
@@ -57,7 +57,7 @@ class SettingsConfigForm extends ConfigFormBase {
    */
   protected function getEditableConfigNames() {
     return [
-      'config_filter.settings',
+      'config_split.settings',
     ];
   }
 
@@ -65,14 +65,14 @@ class SettingsConfigForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function getFormId() {
-    return 'config_filter_settings_form';
+    return 'config_split_settings_form';
   }
 
   /**
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    $config = $this->config('config_filter.settings');
+    $config = $this->config('config_split.settings');
     $form['folder'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Folder'),
@@ -135,7 +135,7 @@ class SettingsConfigForm extends ConfigFormBase {
     parent::submitForm($form, $form_state);
 
     $extensions = $this->config('core.extension');
-    $this->config('config_filter.settings')
+    $this->config('config_split.settings')
       ->set('folder', $form_state->getValue('folder'))
       ->set('module', array_intersect_key($extensions->get('module'), $form_state->getValue('module')))
       ->set('theme', array_intersect_key($extensions->get('theme'), $form_state->getValue('theme')))

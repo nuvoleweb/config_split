@@ -5,7 +5,7 @@
  * Definition of Drush\Config\StorageWrapper.
  */
 
-namespace Drupal\config_filter\Config;
+namespace Drupal\config_split\Config;
 
 use Drupal\Core\Config\StorageInterface;
 
@@ -16,7 +16,7 @@ use Drupal\Core\Config\StorageInterface;
  * It filters the arguments before passing them on to the storage for write
  * operations and filters the result of read operations before returning them.
  *
- * @package Drupal\config_filter\Config
+ * @package Drupal\config_split\Config
  */
 class StorageWrapper implements StorageInterface {
 
@@ -30,7 +30,7 @@ class StorageWrapper implements StorageInterface {
   /**
    * The storage filters.
    * 
-   * @var \Drupal\config_filter\Config\StorageFilterInterface[]
+   * @var \Drupal\config_split\Config\StorageFilterInterface[]
    */
   protected $filters;
 

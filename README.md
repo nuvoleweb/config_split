@@ -3,7 +3,26 @@
 This module provides a storage filter and uses it in drupal console commands
 to filter the imported and exported configuration.
 
-The purpose of this is that one can a set of configuration in CONFIG_SYNC_DIRECTORY
-and work with a superset of configuration for development.
+The purpose of this is that one can a set of configuration in
+<code>CONFIG_SYNC_DIRECTORY</code> and work with a superset of configuration for
+development.
 In other words one can have additional modules enabled and development configuration
-in a separate directory.
+exported in a separate directory, exporting a subset to be deployed.
+
+The Drupal 8 configuration management works best when importing and exporting the
+whole set of the sites configuration. However, sometimes developers like to opt out
+of the robustness of CM and have a super-set of configuration active on their
+development machine. The canonical example for this is to have the <code>devel</code>
+module enabled or having a few block placements or views in the development
+environment and then not export them into the set of configuration to be deployed,
+yet still being able to share the development configuration with colleagues.
+
+Enter <code>config_split</code> that provides a Drupal console command for
+importing and exporting filtered configuration. Drush integration is likely to
+follow soon (after all the filter is inspired by the --skip-modules filter of drush).
+
+The important part to remember is to use Drupal 8s configuration management
+the way it was intended to be used. This module does not interfere with the active
+configuration but instead filters on the import/export pipeline.
+
+The module is still in an early development stage.

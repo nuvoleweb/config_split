@@ -1,9 +1,9 @@
 <?php
 
-namespace Drupal\config_filter\Command;
+namespace Drupal\config_split\Command;
 
-use Drupal\config_filter\Config\SplitFilter;
-use Drupal\config_filter\Config\StorageWrapper;
+use Drupal\config_split\Config\SplitFilter;
+use Drupal\config_split\Config\StorageWrapper;
 use Drupal\Core\Config\ConfigManagerInterface;
 use Drupal\Core\Config\FileStorage;
 use Drupal\Core\Config\ImmutableConfig;
@@ -24,8 +24,8 @@ class ExportCommand extends Command
   protected function configure()
   {
     $this
-      ->setName('configfilter:export')
-      ->setDescription($this->trans('commands.configextra.export.description'))
+      ->setName('config_split:export')
+      ->setDescription($this->trans('commands.config_split.export.description'))
       ->addOption(
         'directory',
         null,
@@ -49,7 +49,7 @@ class ExportCommand extends Command
     /** @var ConfigManagerInterface $configManager */
     $configManager = $this->getDrupalService('config.manager');
     /** @var ImmutableConfig $filterConfig */
-    $filterConfig = \Drupal::config('config_filter.settings');
+    $filterConfig = \Drupal::config('config_split.settings');
 
     try {
       $primary_storage = new FileStorage($directory);

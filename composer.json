@@ -1,14 +1,14 @@
 {
-  "name": "drupal/config_filter",
+  "name": "drupal/config_split",
   "type": "drupal-module",
   "description": "Configuration filter for importing and exporting extra config",
   "keywords": ["Drupal"],
   "license": "GPL-2.0+",
-  "homepage": "https://www.drupal.org/project/config_filter",
+  "homepage": "https://www.drupal.org/project/config_split",
   "minimum-stability": "dev",
   "support": {
-    "issues": "https://www.drupal.org/project/issues/config_filter",
-    "source": "http://cgit.drupalcode.org/config_filter"
+    "issues": "https://www.drupal.org/project/issues/config_split",
+    "source": "http://cgit.drupalcode.org/config_split"
   },
   "require": { }
 }

@@ -1,0 +1,10 @@
+config_split.settings:
+  path: 'admin/config/development/configuration/config_split'
+  defaults:
+    _form: '\Drupal\config_split\Form\SettingsConfigForm'
+    _title: 'Configuration Split Form'
+  requirements:
+    _permission: 'administer site configuration'
+  options:
+    _admin_route: TRUE
+

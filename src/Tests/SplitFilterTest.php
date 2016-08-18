@@ -1,9 +1,9 @@
 <?php
 
-namespace Drupal\config_filter\Tests;
+namespace Drupal\config_split\Tests;
 
 
-use Drupal\config_filter\Config\SplitFilter;
+use Drupal\config_split\Config\SplitFilter;
 use Drupal\Core\Config\NullStorage;
 use Drupal\Core\Config\StorageInterface;
 use \Drupal\Tests\UnitTestCase;
@@ -12,7 +12,7 @@ use Prophecy\Argument;
 /**
  * Class SplitFilterTest.
  *
- * @group config_filter
+ * @group config_split
  */
 class SplitFilterTest extends UnitTestCase{
 
@@ -41,7 +41,7 @@ class SplitFilterTest extends UnitTestCase{
     $filter = new SplitFilter($config->reveal(), $manager->reveal());
 
     // Get the protected blacklist property.
-    $blacklist = new \ReflectionProperty('Drupal\config_filter\Config\SplitFilter', 'blacklist');
+    $blacklist = new \ReflectionProperty('Drupal\config_split\Config\SplitFilter', 'blacklist');
     $blacklist->setAccessible(TRUE);
     $actual = $blacklist->getValue($filter);
     // The order of values and keys are not important.
@@ -246,7 +246,7 @@ class SplitFilterTest extends UnitTestCase{
     $new_filter = $filter->filterCreateCollection($collection);
 
     // Get the protected storage property.
-    $internal = new \ReflectionProperty('Drupal\config_filter\Config\SplitFilter', 'secondaryStorage');
+    $internal = new \ReflectionProperty('Drupal\config_split\Config\SplitFilter', 'secondaryStorage');
     $internal->setAccessible(TRUE);
     $actual = $internal->getValue($new_filter);
     $this->assertEquals($collection_storage, $actual);
@@ -276,7 +276,7 @@ class SplitFilterTest extends UnitTestCase{
    * @param array $themes
    *   The blacklisted themes that are removed from the core.extensions.
    *
-   * @return \Drupal\config_filter\Config\SplitFilter
+   * @return \Drupal\config_split\Config\SplitFilter
    *   The filter to test.
    */
   protected function getFilter(StorageInterface $storage = NULL, array $blacklist = [], array $modules = [], array $themes = []) {

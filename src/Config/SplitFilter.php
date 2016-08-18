@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\config_filter\Config;
+namespace Drupal\config_split\Config;
 
 
 use Drupal\Core\Config\Config;
@@ -10,7 +10,7 @@ use Drupal\Core\Config\StorageInterface;
 /**
  * Class SplitFilter.
  *
- * @package Drupal\config_filter\Config
+ * @package Drupal\config_split\Config
  */
 class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
 
