@@ -52,11 +52,12 @@ class ExportCommand extends Command
     $filterConfig = \Drupal::config('config_split.settings');
 
     try {
-      if (!$filterConfig->get('folder')) {
-        throw new \InvalidArgumentException('The split folder is not set.');
-      }
       $primary_storage = new FileStorage($directory);
       $secondary_storage = new FileStorage($filterConfig->get('folder'));
+      if (!$filterConfig->get('folder')) {
+        $secondary_storage = NULL;
+        $io->error('The split folder is not set.');
+      }
       $configFilter = new SplitFilter($filterConfig, $configManager, $secondary_storage);
 
       /** @var StorageInterface $source_storage */
