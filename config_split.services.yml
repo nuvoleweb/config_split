@@ -1,0 +1,4 @@
+services:
+  config_split.cli:
+    class: Drupal\config_split\ConfigSplitCliService
+    arguments: ["@config.manager", "@config.storage", "@event_dispatcher", "@lock", "@config.typed", "@module_handler", "@module_installer", "@theme_handler", "@string_translation"]
