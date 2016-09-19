@@ -31,9 +31,13 @@ class SettingsConfigForm extends ConfigFormBase {
 
   /**
    * SplitFilterConfigForm constructor.
+   *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The config factory service.
    * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
+   *   The module handler service.
    * @param \Drupal\Core\Extension\ThemeHandlerInterface $theme_handler
+   *   The theme handler service.
    */
   public function __construct(ConfigFactoryInterface $config_factory, ModuleHandlerInterface $module_handler, ThemeHandlerInterface $theme_handler) {
     parent::__construct($config_factory);

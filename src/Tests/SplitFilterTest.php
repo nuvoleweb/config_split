@@ -2,7 +2,6 @@
 
 namespace Drupal\config_split\Tests;
 
-
 use Drupal\config_split\Config\SplitFilter;
 use Drupal\Core\Config\NullStorage;
 use Drupal\Core\Config\StorageInterface;
@@ -14,7 +13,7 @@ use Prophecy\Argument;
  *
  * @group config_split
  */
-class SplitFilterTest extends UnitTestCase{
+class SplitFilterTest extends UnitTestCase {
 
   /**
    * {@inheritdoc}
@@ -23,6 +22,9 @@ class SplitFilterTest extends UnitTestCase{
     parent::setUp();
   }
 
+  /**
+   * Test that the blacklist is correctly calculated.
+   */
   public function testBlacklist() {
     $config = $this->prophesize('Drupal\Core\Config\ImmutableConfig');
     $config->get('blacklist')->willReturn(['a', 'b']);
@@ -49,6 +51,9 @@ class SplitFilterTest extends UnitTestCase{
     $this->assertArrayEquals(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'module1.settings'], $actual);
   }
 
+  /**
+   * Test that the filter reads correctly.
+   */
   public function testFilterRead() {
     // Transparent filter.
     $name = $this->randomMachineName();
@@ -101,6 +106,9 @@ class SplitFilterTest extends UnitTestCase{
     $this->assertEquals($extensions_extra, $filter->filterRead('core.extension', $extensions_extra));
   }
 
+  /**
+   * Test that the filter writes correctly.
+   */
   public function testFilterWrite() {
     // Transparent filter.
     $name = $this->randomMachineName();
@@ -155,6 +163,9 @@ class SplitFilterTest extends UnitTestCase{
     $this->assertEquals($extensions, $filter->filterWrite('core.extension', $extensions_extra));
   }
 
+  /**
+   * Test that the filter checks existence correctly.
+   */
   public function testFilterExists() {
     $storage = $this->prophesize('Drupal\Core\Config\StorageInterface');
     $storage->exists('Yes')->willReturn(TRUE);
@@ -174,6 +185,9 @@ class SplitFilterTest extends UnitTestCase{
     $this->assertFalse($filter->filterExists('No', FALSE));
   }
 
+  /**
+   * Test that the filter deletes correctly.
+   */
   public function testFilterDelete() {
     $storage = $this->prophesize('Drupal\Core\Config\StorageInterface');
     $storage->delete('Yes')->willReturn(TRUE);
@@ -188,6 +202,9 @@ class SplitFilterTest extends UnitTestCase{
     $this->assertFalse($filter->filterDelete('No', FALSE));
   }
 
+  /**
+   * Test that the filter reads multiple objects correctly.
+   */
   public function testFilterReadMultiple() {
     // Set up random config storage.
     $primary = (array) $this->getRandomGenerator()->object(rand(3, 10));
@@ -204,6 +221,9 @@ class SplitFilterTest extends UnitTestCase{
     $this->assertArrayEquals($merged, $filter->filterReadMultiple(array_keys($merged), $primary));
   }
 
+  /**
+   * Test that the filter lists all correctly.
+   */
   public function testFilterListAll() {
     // Set up random config storage.
     $primary = (array) $this->getRandomGenerator()->object(rand(3, 10));
@@ -219,6 +239,9 @@ class SplitFilterTest extends UnitTestCase{
     $this->assertArrayEquals(array_keys($merged), $filter->filterListAll('', array_keys($primary)));
   }
 
+  /**
+   * Test that the filter deletes all correctly.
+   */
   public function testFilterDeleteAll() {
     $storage = $this->prophesize('Drupal\Core\Config\StorageInterface');
     $storage->deleteAll('Yes')->willReturn(TRUE);
@@ -233,6 +256,9 @@ class SplitFilterTest extends UnitTestCase{
     $this->assertFalse($filter->filterDeleteAll('No', FALSE));
   }
 
+  /**
+   * Test that the filter creates collections correctly.
+   */
   public function testFilterCreateCollection() {
     $collection = $this->randomMachineName();
     $collection_storage = new NullStorage();
@@ -252,6 +278,9 @@ class SplitFilterTest extends UnitTestCase{
     $this->assertEquals($collection_storage, $actual);
   }
 
+  /**
+   * Test that the filter gets collections names correctly.
+   */
   public function testFilterGetAllCollectionNames() {
     $collections = array_keys((array) $this->getRandomGenerator()->object(rand(3, 10)));
     $extra = array_keys((array) $this->getRandomGenerator()->object(rand(3, 10)));
@@ -267,7 +296,8 @@ class SplitFilterTest extends UnitTestCase{
 
   /**
    * Returns a SplitFilter that can be used to test its behaviour.
-   * @param \Drupal\Core\Config\StorageInterface|NULL $storage
+   *
+   * @param \Drupal\Core\Config\StorageInterface|null $storage
    *   The Storage interface the filter can use as its alternative storage.
    * @param array $blacklist
    *   The blacklisted configuration that is filtered out.

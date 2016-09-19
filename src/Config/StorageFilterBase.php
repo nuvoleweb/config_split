@@ -2,7 +2,6 @@
 
 namespace Drupal\config_split\Config;
 
-
 use Drupal\Core\Config\StorageInterface;
 
 /**
@@ -10,7 +9,7 @@ use Drupal\Core\Config\StorageInterface;
  *
  * Pass everything along as it came in.
  */
-class StorageFilterBase implements StorageFilterInterface{
+class StorageFilterBase implements StorageFilterInterface {
 
   /**
    * {@inheritdoc}
@@ -88,4 +87,5 @@ class StorageFilterBase implements StorageFilterInterface{
   public function filterGetCollectionName($collection) {
     return $collection;
   }
+
 }

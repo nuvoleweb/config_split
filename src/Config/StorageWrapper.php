@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Definition of Drush\Config\StorageWrapper.
- */
-
 namespace Drupal\config_split\Config;
 
 use Drupal\Core\Config\StorageInterface;
@@ -29,7 +24,7 @@ class StorageWrapper implements StorageInterface {
 
   /**
    * The storage filters.
-   * 
+   *
    * @var \Drupal\config_split\Config\StorageFilterInterface[]
    */
   protected $filters;
@@ -37,9 +32,9 @@ class StorageWrapper implements StorageInterface {
   /**
    * Create a StorageWrapper with some storage and a filter.
    */
-  function __construct($storage, $filterOrFilters) {
+  public function __construct($storage, $filterOrFilters) {
     $this->storage = $storage;
-    $this->filters = is_array($filterOrFilters) ? $filterOrFilters : array($filterOrFilters);
+    $this->filters = is_array($filterOrFilters) ? $filterOrFilters : [$filterOrFilters];
   }
 
   /**
@@ -50,6 +45,7 @@ class StorageWrapper implements StorageInterface {
     foreach ($this->filters as $filter) {
       $exists = $filter->filterExists($name, $exists);
     }
+
     return $exists;
   }
 
@@ -61,6 +57,7 @@ class StorageWrapper implements StorageInterface {
     foreach ($this->filters as $filter) {
       $data = $filter->filterRead($name, $data);
     }
+
     return $data;
   }
 
@@ -72,6 +69,7 @@ class StorageWrapper implements StorageInterface {
     foreach ($this->filters as $filter) {
       $data = $filter->filterReadMultiple($names, $data);
     }
+
     return $data;
   }
 
@@ -82,9 +80,11 @@ class StorageWrapper implements StorageInterface {
     foreach ($this->filters as $filter) {
       $data = $filter->filterWrite($name, $data, $this->storage);
     }
+
     if ($data) {
       return $this->storage->write($name, $data);
     }
+
     // The data was not written, but it is not an error.
     return TRUE;
   }
@@ -97,9 +97,11 @@ class StorageWrapper implements StorageInterface {
     foreach ($this->filters as $filter) {
       $success = $filter->filterDelete($name, $success);
     }
+
     if ($success) {
       $success = $this->storage->delete($name);
     }
+
     return $success;
   }
 
@@ -111,9 +113,11 @@ class StorageWrapper implements StorageInterface {
     foreach ($this->filters as $filter) {
       $success = $filter->filterRename($name, $new_name, $success);
     }
+
     if ($success) {
       $success = $this->storage->rename($name, $new_name);
     }
+
     return $success;
   }
 
@@ -139,6 +143,7 @@ class StorageWrapper implements StorageInterface {
     foreach ($this->filters as $filter) {
       $data = $filter->filterListAll($prefix, $data);
     }
+
     return $data;
   }
 
@@ -150,9 +155,11 @@ class StorageWrapper implements StorageInterface {
     foreach ($this->filters as $filter) {
       $delete = $filter->filterDeleteAll($prefix, $delete);
     }
+
     if ($delete) {
       $delete = $this->storage->deleteAll($prefix);
     }
+
     return $delete;
   }
 
@@ -162,10 +169,12 @@ class StorageWrapper implements StorageInterface {
   public function createCollection($collection) {
     $filters = [];
     foreach ($this->filters as $filter) {
-      if ($filter = $filter->filterCreateCollection($collection)) {
+      $filter = $filter->filterCreateCollection($collection);
+      if ($filter) {
         $filters[] = $filter;
       }
     }
+
     return new static($this->storage->createCollection($collection), $filters);
   }
 
@@ -177,6 +186,7 @@ class StorageWrapper implements StorageInterface {
     foreach ($this->filters as $filter) {
       $collections = $filter->filterGetAllCollectionNames($collections);
     }
+
     return $collections;
   }
 
@@ -188,6 +198,7 @@ class StorageWrapper implements StorageInterface {
     foreach ($this->filters as $filter) {
       $collection = $filter->filterGetCollectionName($collection);
     }
+
     return $collection;
   }
 

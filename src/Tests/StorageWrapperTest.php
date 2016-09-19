@@ -2,7 +2,6 @@
 
 namespace Drupal\config_split\Tests;
 
-
 use Drupal\config_split\Config\StorageFilterBase;
 use Drupal\config_split\Config\StorageWrapper;
 use Drupal\KernelTests\Core\Config\Storage\CachedStorageTest;
@@ -23,4 +22,5 @@ class StorageWrapperTest extends CachedStorageTest {
     // So all inherited tests should still pass.
     $this->storage = new StorageWrapper($this->storage, new StorageFilterBase());
   }
+
 }

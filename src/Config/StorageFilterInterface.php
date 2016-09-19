@@ -1,14 +1,14 @@
 <?php
 
-/**
- * @file
- * Definition of Drush\Config\StorageFilter.
- */
-
 namespace Drupal\config_split\Config;
 
 use Drupal\Core\Config\StorageInterface;
 
+/**
+ * Interface StorageFilterInterface.
+ *
+ * @package Drupal\config_split\Config
+ */
 interface StorageFilterInterface {
 
   /**
@@ -146,7 +146,7 @@ interface StorageFilterInterface {
    *   configuration in a way that allows retrieval of configuration for a
    *   particular collection.
    *
-   * @return \Drupal\config_split\Config\StorageFilterInterface|NULL
+   * @return \Drupal\config_split\Config\StorageFilterInterface|null
    *   Return a filter that should participate in the collection. This is
    *   allows filters to act on different collections.
    */
@@ -177,4 +177,5 @@ interface StorageFilterInterface {
    *   The current collection name.
    */
   public function filterGetCollectionName($collection);
+
 }

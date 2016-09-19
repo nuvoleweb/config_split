@@ -2,7 +2,6 @@
 
 namespace Drupal\config_split\Config;
 
-
 use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigManagerInterface;
 use Drupal\Core\Config\StorageInterface;
@@ -49,7 +48,7 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
    *   The filter config that has 'blacklist', 'module', and 'theme'.
    * @param \Drupal\Core\Config\ConfigManagerInterface $manager
    *   The config manager for retrieving dependent config.
-   * @param \Drupal\Core\Config\StorageInterface|NULL $secondary
+   * @param \Drupal\Core\Config\StorageInterface|null $secondary
    *   The config storage for the blacklisted config.
    */
   public function __construct(Config $config, ConfigManagerInterface $manager, StorageInterface $secondary = NULL) {
@@ -58,12 +57,16 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
     $this->secondaryStorage = $secondary;
 
     $blacklist = $config->get('blacklist');
-    if ($modules = array_keys($config->get('module'))) {
+    $modules = array_keys($config->get('module'));
+    if ($modules) {
       $blacklist = array_merge($blacklist, array_keys($manager->findConfigEntityDependents('module', $modules)));
     }
-    if ($themes = array_keys($config->get('theme'))) {
+
+    $themes = array_keys($config->get('theme'));
+    if ($themes) {
       $blacklist = array_merge($blacklist, array_keys($manager->findConfigEntityDependents('theme', $themes)));
     }
+
     $extensions = array_merge([], $modules, $themes);
     $blacklist = array_merge($blacklist, array_filter($manager->getConfigFactory()->listAll(), function ($name) use ($extensions) {
       // Filter the list of config objects since they are not included in
@@ -73,6 +76,7 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
           return TRUE;
         }
       }
+
       return FALSE;
     }));
     // Finally merge all dependencies of the blacklisted config.
@@ -88,9 +92,11 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
         return $alternative;
       }
     }
+
     if ($name != 'core.extension') {
       return $data;
     }
+
     $data['module'] = array_merge($data['module'], $this->config->get('module'));
     $data['theme'] = array_merge($data['theme'], $this->config->get('theme'));
     // Sort the modules.
@@ -113,11 +119,14 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
       if ($this->secondaryStorage) {
         $this->secondaryStorage->write($name, $data);
       }
+
       return NULL;
     }
+
     if ($name != 'core.extension') {
       return $data;
     }
+
     $data['module'] = array_diff_key($data['module'], $this->config->get('module'));
     $data['theme'] = array_diff_key($data['theme'], $this->config->get('theme'));
     return $data;
@@ -130,6 +139,7 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
     if (!$exists && $this->secondaryStorage) {
       $exists = $this->secondaryStorage->exists($name);
     }
+
     return $exists;
   }
 
@@ -141,6 +151,7 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
       // Call delete on the secondary storage anyway.
       $this->secondaryStorage->delete($name);
     }
+
     return $delete;
   }
 
@@ -151,9 +162,11 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
     if ($this->secondaryStorage) {
       $data = array_merge($data, $this->secondaryStorage->readMultiple($names));
     }
+
     if (in_array('core.extension', $names)) {
       $data['core.extension'] = $this->filterRead('core.extension', $data['core.extension']);
     }
+
     return $data;
   }
 
@@ -164,6 +177,7 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
     if ($this->secondaryStorage) {
       $data = array_unique(array_merge($data, $this->secondaryStorage->listAll($prefix)));
     }
+
     return $data;
   }
 
@@ -174,6 +188,7 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
     if ($delete && $this->secondaryStorage) {
       $this->secondaryStorage->deleteAll($prefix);
     }
+
     return $delete;
   }
 
@@ -184,6 +199,7 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
     if ($this->secondaryStorage) {
       return new static($this->config, $this->manager, $this->secondaryStorage->createCollection($collection));
     }
+
     return $this;
   }
 
@@ -194,6 +210,7 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
     if ($this->secondaryStorage) {
       $collections = array_merge($collections, $this->secondaryStorage->getAllCollectionNames());
     }
+
     return $collections;
   }
 
