@@ -2,128 +2,101 @@
 
 namespace Drupal\config_split\Command;
 
-use Drupal\config_split\Config\SplitFilter;
-use Drupal\config_split\Config\StorageWrapper;
-use Drupal\Core\Config\ConfigManagerInterface;
+use Drupal\config_split\ConfigSplitCliService;
 use Drupal\Core\Config\ImmutableConfig;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Command\Command;
 use Drupal\Console\Command\Shared\ContainerAwareCommandTrait;
 use Drupal\Console\Style\DrupalStyle;
 use Drupal\Core\Config\ConfigImporterException;
-use Drupal\Core\Config\ConfigImporter;
 use Drupal\Core\Config\FileStorage;
-use Drupal\Core\Config\StorageComparer;
 
-class ImportCommand extends Command
-{
+/**
+ * Class ImportCommand.
+ *
+ * @package Drupal\config_split\Command
+ */
+class ImportCommand extends Command {
+
   use ContainerAwareCommandTrait;
+
   /**
    * {@inheritdoc}
    */
-  protected function configure()
-  {
+  protected function configure() {
     $this
       ->setName('config_split:import')
       ->setDescription($this->trans('commands.config_split.import.description'))
-      ->addOption(
-        'directory',
-        null,
-        InputOption::VALUE_OPTIONAL,
-        $this->trans('commands.config.import.arguments.directory')
-      );
+      ->addOption('directory', 'dir')
+      ->addOption('split-directory', 'split-dir')
+      ->addOption('split');
   }
 
   /**
    * {@inheritdoc}
    */
-  protected function execute(InputInterface $input, OutputInterface $output)
-  {
+  protected function execute(InputInterface $input, OutputInterface $output) {
     $io = new DrupalStyle($input, $output);
-    
-    $directory = $input->getOption('directory');
+    try {
+      $directory = $input->getOption('directory');
+      $splitDirectory = $input->getOption('split-directory');
 
-    if (!$directory) {
-      $directory = config_get_config_directory(CONFIG_SYNC_DIRECTORY);
-    }
-
-
-    /** @var ConfigManagerInterface $config_manager */
-    $config_manager = $this->getDrupalService('config.manager');
-    /** @var ImmutableConfig $filter_config */
-    $filter_config = \Drupal::config('config_split.settings');
-
-    $active_storage = \Drupal::service('config.storage');
-    $source_storage = new FileStorage($directory);
-    $secondary_storage = new FileStorage($filter_config->get('folder'));
-
-    $config_split = new SplitFilter($filter_config, $config_manager, $secondary_storage);
-    $import_storage = new StorageWrapper($source_storage, $config_split);
-
-    $storage_comparer = new StorageComparer($import_storage, $active_storage, $config_manager);
-
-    if (!$storage_comparer->createChangelist()->hasChanges()) {
-      $io->success($this->trans('commands.config.import.messages.nothing-to-do'));
-
-    }
-
-    if ($this->configImport($io,$storage_comparer)) {
-      $io->success($this->trans('commands.config.import.messages.imported'));
-
-    }
-
-  }
-
-
-  private function configImport($io,StorageComparer $storage_comparer)
-  {
-    $config_importer = new ConfigImporter(
-      $storage_comparer,
-      \Drupal::service('event_dispatcher'),
-      \Drupal::service('config.manager'),
-      \Drupal::lock(),
-      \Drupal::service('config.typed'),
-      \Drupal::moduleHandler(),
-      \Drupal::service('module_installer'),
-      \Drupal::service('theme_handler'),
-      \Drupal::service('string_translation')
-    );
-
-    if ($config_importer->alreadyImporting()) {
-      $io->success($this->trans('commands.config.import.messages.already-imported'));
-
-
-    }
-
-    else{
-      try {
-        $config_importer->import();
-        $io->info($this->trans('commands.config.import.messages.importing'));
-
-      }
-      catch (ConfigImporterException $e) {
-        $message = 'The import failed due for the following reasons:' . "\n";
-        $message .= implode("\n", $config_importer->getErrors());
-        $io->error(
-          sprintf(
-            $this->trans('commands.site.import.local.messages.error-writing'),
-            $message
-          )
-        );
+      if (!$directory) {
+        $directory = config_get_config_directory(CONFIG_SYNC_DIRECTORY);
       }
 
-      catch (\Exception $e){
-        $io->error(
-          sprintf(
-            $this->trans('commands.site.import.local.messages.error-writing'),
-            $e->getMessage()
-          )
-        );
+      // Here we could load the configuration according to the split name.
+      // $split = $input->getOption('split');
+      // But for now we load the settings.
+      /** @var ImmutableConfig $config */
+      $config = \Drupal::config('config_split.settings');
 
+      $primary = new FileStorage($directory);
+      $secondary = NULL;
+      if ($splitDirectory) {
+        $secondary = new FileStorage($splitDirectory);
+      }
+
+      $cliService = \Drupal::service('config_split.cli');
+      $state = $cliService->import($config, $primary, $secondary);
+
+      switch ($state) {
+        case ConfigSplitCliService::COMPLETE:
+          $io->success($this->trans('commands.config.export.messages.directory'));
+          $io->simple($directory);
+          $io->simple($secondary->getFilePath('split'));
+          $io->success($this->trans('commands.config.import.messages.imported'));
+          break;
+
+        case ConfigSplitCliService::NO_CHANGES:
+          $io->success($this->trans('commands.config.import.messages.nothing-to-do'));
+          break;
+
+        case ConfigSplitCliService::ALREADY_IMPORTING:
+          $io->success($this->trans('commands.config.import.messages.already-imported'));
+          break;
       }
     }
+    catch (ConfigImporterException $e) {
+      $message = 'The import failed due for the following reasons:' . "\n";
+      $message .= implode("\n", $cliService->getErrors());
+      $io->error(
+        sprintf(
+          $this->trans('commands.site.import.local.messages.error-writing'),
+          $message
+        )
+      );
+    }
+    catch (\Exception $e) {
+      $io->error(
+        sprintf(
+          $this->trans('commands.site.import.local.messages.error-writing'),
+          $e->getMessage()
+        )
+      );
+    }
+
   }
 
 }
