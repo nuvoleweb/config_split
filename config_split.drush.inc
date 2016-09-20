@@ -103,8 +103,8 @@ function drush_config_split_export($destination = NULL) {
   // Here we could load the configuration according to the split name.
   // $split = drush_get_option('split');
   // But for now we load the settings.
-  /** @var ImmutableConfig $config */
-  $config = \Drupal::config('config_split.settings');
+  /** @var ImmutableConfig[] $config */
+  $config = \Drupal::service('config_split.cli')->getAllConfig();
 
   $primary = new FileStorage($destination_dir);
   $secondary = NULL;
@@ -144,8 +144,8 @@ function drush_config_split_import($source = NULL) {
   // Here we could load the configuration according to the split name.
   // $split = drush_get_option('split');
   // But for now we load the settings.
-  /** @var ImmutableConfig $config */
-  $config = \Drupal::config('config_split.settings');
+  /** @var ImmutableConfig[] $config */
+  $config = \Drupal::service('config_split.cli')->getAllConfig();
 
   $primary = new FileStorage($source_dir);
   $secondary = NULL;

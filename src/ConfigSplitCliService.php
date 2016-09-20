@@ -229,6 +229,22 @@ class ConfigSplitCliService {
   }
 
   /**
+   * Get all the config_split configurations.
+   * @return \Drupal\Core\Config\ImmutableConfig[]
+   */
+  public function getAllConfig() {
+    $names = $this->configManager->getConfigFactory()->listAll('config_split.config_split.');
+    $config = $this->configManager->getConfigFactory()->loadMultiple($names);
+
+    // Sort the configuration by weight.
+    uasort($config, function ($a, $b) {
+      return strcmp($a->get('weight'), $b->get('weight'));
+    });
+
+    return $config;
+  }
+
+  /**
    * Get the storage which can handle the filter and set the secondary storage.
    *
    * @param \Drupal\Core\Config\Config|\Drupal\Core\Config\Config[] $configs

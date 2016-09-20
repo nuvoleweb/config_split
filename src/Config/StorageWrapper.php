@@ -78,7 +78,9 @@ class StorageWrapper implements StorageInterface {
    */
   public function write($name, array $data) {
     foreach ($this->filters as $filter) {
-      $data = $filter->filterWrite($name, $data, $this->storage);
+      if ($data) {
+        $data = $filter->filterWrite($name, $data, $this->storage);
+      }
     }
 
     if ($data) {

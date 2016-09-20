@@ -46,8 +46,8 @@ class ExportCommand extends Command {
       // Here we could load the configuration according to the split name.
       // $split = $input->getOption('split');
       // But for now we load the settings.
-      /** @var ImmutableConfig $config */
-      $config = \Drupal::config('config_split.settings');
+      /** @var ImmutableConfig[] $config */
+      $config = \Drupal::service('config_split.cli')->getAllConfig();
 
       $primary = new FileStorage($directory);
       $secondary = NULL;
