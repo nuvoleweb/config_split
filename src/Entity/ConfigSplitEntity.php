@@ -43,6 +43,7 @@ use Drupal\Core\Config\FileStorage;
  *     "module",
  *     "theme",
  *     "blacklist",
+ *     "graylist",
  *     "weight",
  *   }
  * )
@@ -90,6 +91,13 @@ class ConfigSplitEntity extends ConfigEntityBase implements ConfigSplitEntityInt
    * @var string[]
    */
   protected $blacklist = [];
+
+  /**
+   * The configuration to ignore.
+   *
+   * @var string[]
+   */
+  protected $graylist = [];
 
   /**
    * The weight of the configuration when spliting several folders.

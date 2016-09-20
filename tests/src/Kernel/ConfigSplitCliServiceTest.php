@@ -104,6 +104,7 @@ class ConfigSplitCliServiceTest extends KernelTestBase {
       'module' => ['config_test' => 0],
       'theme' => [],
       'blacklist' => [],
+      'graylist' => [],
     ]);
 
     // Export the configuration without the test configuration.
@@ -150,6 +151,67 @@ class ConfigSplitCliServiceTest extends KernelTestBase {
 
     $this->assertNotFalse(strpos($vanilla_config['core.extension.yml'], 'config_test'), 'config_test is enabled.');
     $this->assertFalse(strpos($sync_config['core.extension.yml'], 'config_test'), 'config_test is not enabled.');
+
+  }
+
+  /**
+   * Test blacklist and gray list export.
+   */
+  public function testGrayAndBlackListExport() {
+
+    $split = vfsStream::setup('split');
+    $primary = new FileStorage($split->url() . '/sync');
+    $config = new ImmutableConfig('test_split', $this->container->get('config.storage'), $this->container->get('event_dispatcher'), $this->container->get('config.typed'));
+    $config->initWithData([
+      'folder' => $split->url() . '/split',
+      'module' => [],
+      'theme' => [],
+      'blacklist' => ['config_test.types'],
+      'graylist' => ['config_test.system'],
+    ]);
+
+    // Export the configuration like core.
+    $this->container->get('config_split.cli')->export([], $primary);
+
+    $original_config = [];
+    foreach ($split->getChild('sync')->getChildren() as $child) {
+      if ($child->getType() == vfsStreamContent::TYPE_FILE && $child->getName() != '.htaccess') {
+        $original_config[$child->getName()] = $child->getContent();
+      }
+    }
+
+    $this->assertFalse($split->hasChild('split'), 'The split directory is empty.');
+    $this->assertTrue(isset($original_config['config_test.system.yml']), 'The graylisted config is exported.');
+    $this->assertTrue(isset($original_config['config_test.types.yml']), 'The blacklisted config is exported.');
+
+    // Change the gray listed config to see if it is exported the same.
+    $this->config('config_test.system')->set('foo', 'baz')->save();
+
+    // Export the configuration with filtering.
+    $this->container->get('config_split.cli')->export([$config], $primary);
+
+    $sync_config = [];
+    foreach ($split->getChild('sync')->getChildren() as $child) {
+      if ($child->getType() == vfsStreamContent::TYPE_FILE && $child->getName() != '.htaccess') {
+        $sync_config[$child->getName()] = $child->getContent();
+      }
+    }
+
+    $split_config = [];
+    foreach ($split->getChild('split')->getChildren() as $child) {
+      if ($child->getType() == vfsStreamContent::TYPE_FILE && $child->getName() != '.htaccess') {
+        $split_config[$child->getName()] = $child->getContent();
+      }
+    }
+
+    $this->assertTrue(isset($split_config['config_test.system.yml']), 'The graylisted config is exported to the split.');
+    $this->assertTrue(isset($split_config['config_test.types.yml']), 'The blacklisted config is exported to the split.');
+    $this->assertTrue(isset($sync_config['config_test.system.yml']), 'The graylisted config is exported to the sync.');
+    $this->assertFalse(isset($sync_config['config_test.types.yml']), 'The blacklisted config is not exported to the sync.');
+
+    $this->assertEquals($original_config['config_test.types.yml'], $split_config['config_test.types.yml'], 'The split blacklisted config is the same..');
+    $this->assertEquals($original_config['config_test.system.yml'], $sync_config['config_test.system.yml'], 'The graylisted config stayed the same.');
+    $this->assertNotEquals($original_config['config_test.system.yml'], $split_config['config_test.system.yml'], 'The split graylisted config is different.');
 
   }
 

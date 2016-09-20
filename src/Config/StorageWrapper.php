@@ -87,6 +87,14 @@ class StorageWrapper implements StorageInterface {
       return $this->storage->write($name, $data);
     }
 
+    if ($this->storage->exists($name)) {
+      foreach ($this->filters as $filter) {
+        if ($filter->filterWriteEmptyIsDelete($name)) {
+          return $this->storage->delete($name);
+        }
+      }
+    }
+
     // The data was not written, but it is not an error.
     return TRUE;
   }

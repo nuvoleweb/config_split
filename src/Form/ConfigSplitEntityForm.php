@@ -93,6 +93,16 @@ class ConfigSplitEntityForm extends EntityForm {
       '#default_value' => $config->get('blacklist'),
     ];
 
+    $form['graylist'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Graylist'),
+      '#description' => $this->t('Select configuration to ignore.'),
+      '#options' => array_combine($this->configFactory()->listAll(), $this->configFactory()->listAll()),
+      '#size' => 5,
+      '#multiple' => TRUE,
+      '#default_value' => $config->get('graylist'),
+    ];
+
     $form['weight'] = [
       '#type' => 'number',
       '#title' => $this->t('Weight'),
@@ -113,6 +123,7 @@ class ConfigSplitEntityForm extends EntityForm {
     $form_state->setValue('module', array_intersect_key($extensions->get('module'), $form_state->getValue('module')));
 //    $form_state->setValue('theme', array_intersect_key($extensions->get('theme'), $form_state->getValue('theme')));
     $form_state->setValue('blacklist', array_keys($form_state->getValue('blacklist')));
+    $form_state->setValue('graylist', array_keys($form_state->getValue('graylist')));
 
     parent::submitForm($form, $form_state);
   }

@@ -28,6 +28,13 @@ class StorageFilterBase implements StorageFilterInterface {
   /**
    * {@inheritdoc}
    */
+  public function filterWriteEmptyIsDelete($name) {
+    return FALSE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function filterExists($name, $exists) {
     return $exists;
   }

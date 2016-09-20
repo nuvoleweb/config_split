@@ -138,8 +138,8 @@ class ConfigSplitCliService {
    */
   public function export($config, StorageInterface $primary, StorageInterface $secondary = NULL) {
     $storage = $this->getStorage($config, $primary, $secondary);
-    // Remove everything in the storage to write everything again.
-    $storage->deleteAll();
+    // Remove all the configuration which is not available.
+    $this->deleteSuperfluous($storage, $this->configManager->getConfigFactory()->listAll());
 
     // Inspired by \Drupal\config\Controller\ConfigController::downloadExport().
     // Get raw configuration data without overrides.
@@ -151,14 +151,8 @@ class ConfigSplitCliService {
     foreach ($this->configStorage->getAllCollectionNames() as $collection) {
       $source_collection = $this->configStorage->createCollection($collection);
       $destination_collection = $storage->createCollection($collection);
-      try {
-        // Delete everything in the collection sub-directory.
-        $destination_collection->deleteAll();
-      }
-      catch (\UnexpectedValueException $e) {
-        // The folder doesn't exist yet.
-        unset($e);
-      }
+      // Delete everything in the collection sub-directory.
+      $this->deleteSuperfluous($destination_collection, $source_collection->listAll());
 
       foreach ($source_collection->listAll() as $name) {
         $destination_collection->write($name, $source_collection->read($name));
@@ -166,6 +160,22 @@ class ConfigSplitCliService {
 
     }
 
+  }
+
+  /**
+   * Delete configuration that will not be exported.
+   *
+   * @param \Drupal\Core\Config\StorageInterface $storage
+   *   The storage to clean.
+   * @param $keep
+   *   The array of configuration names to keep.
+   */
+  protected function deleteSuperfluous(StorageInterface $storage, $keep) {
+    foreach ($storage->listAll() as $name) {
+      if (!in_array($name, $keep)) {
+        $storage->delete($name);
+      }
+    }
   }
 
   /**

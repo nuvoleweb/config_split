@@ -30,6 +30,11 @@ config_split.config_split.*:
       label: 'Filtered configuration'
       sequence:
         type: string
+    graylist:
+      type: sequence
+      label: 'Ignored configuration'
+      sequence:
+        type: string
     weight:
       type: integer
       label: 'Weight'

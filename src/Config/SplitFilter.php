@@ -122,6 +122,17 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
 
       return NULL;
     }
+    if (in_array($name, $this->config->get('graylist'))) {
+      if ($this->secondaryStorage) {
+        $this->secondaryStorage->write($name, $data);
+      }
+
+      if ($storage) {
+        return $storage->read($name);
+      }
+
+      return NULL;
+    }
 
     if ($name != 'core.extension') {
       return $data;
@@ -130,6 +141,13 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
     $data['module'] = array_diff_key($data['module'], $this->config->get('module'));
     $data['theme'] = array_diff_key($data['theme'], $this->config->get('theme'));
     return $data;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function filterWriteEmptyIsDelete($name) {
+    return $name != 'core.extension';
   }
 
   /**

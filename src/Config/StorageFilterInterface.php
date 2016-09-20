@@ -42,6 +42,17 @@ interface StorageFilterInterface {
   public function filterWrite($name, array $data, StorageInterface $storage = NULL);
 
   /**
+   * Let the filter decide whether writing not writing data should mean delete.
+   *
+   * @param string $name
+   *   The name of a configuration object to save.
+   *
+   * @return bool
+   *   True to delete at the end of a filtered write action.
+   */
+  public function filterWriteEmptyIsDelete($name);
+
+  /**
    * Filters whether a configuration object exists.
    *
    * @param string $name

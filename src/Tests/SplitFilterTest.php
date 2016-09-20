@@ -128,6 +128,18 @@ class SplitFilterTest extends UnitTestCase {
     $this->assertEquals($data, $filter->filterWrite($name, $data));
     $this->assertNull($filter->filterWrite($name2, $data));
 
+    // Filter with a gray list and a storage.
+    $name3 = $this->randomMachineName();
+    $data3 = (array) $this->getRandomGenerator()->object();
+    $storage = $this->prophesize('Drupal\Core\Config\StorageInterface');
+    $storage->write(Argument::cetera())->willReturn(TRUE);
+    $storage->read($name3)->willReturn($data3);
+    $storage = $storage->reveal();
+    $filter = $this->getFilter($storage, [$name2], [], [], [$name3]);
+    $this->assertEquals($data, $filter->filterWrite($name, $data, $storage));
+    $this->assertNull($filter->filterWrite($name2, $data, $storage));
+    $this->assertEquals($data3, $filter->filterWrite($name3, $data, $storage));
+
     // Test that extensions are correctly removed.
     $extensions = [
       'module' => [
@@ -309,10 +321,11 @@ class SplitFilterTest extends UnitTestCase {
    * @return \Drupal\config_split\Config\SplitFilter
    *   The filter to test.
    */
-  protected function getFilter(StorageInterface $storage = NULL, array $blacklist = [], array $modules = [], array $themes = []) {
+  protected function getFilter(StorageInterface $storage = NULL, array $blacklist = [], array $modules = [], array $themes = [], array $graylist = []) {
     // Set up a Config object that returns the blacklist and modules.
     $config = $this->prophesize('Drupal\Core\Config\ImmutableConfig');
     $config->get('blacklist')->willReturn($blacklist);
+    $config->get('graylist')->willReturn($graylist);
     $config->get('module')->willReturn($modules);
     $config->get('theme')->willReturn($themes);
 
