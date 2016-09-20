@@ -1,7 +1,15 @@
-config_split.settings:
-  type: config_object
-  label: 'Config Filter settings'
+config_split.config_split.*:
+  type: config_entity
+  label: 'Configuration Split Setting'
   mapping:
+    id:
+      type: string
+      label: 'ID'
+    label:
+      type: label
+      label: 'Label'
+    uuid:
+      type: string
     folder:
       type: string
       label: 'Folder'
@@ -22,3 +30,6 @@ config_split.settings:
       label: 'Filtered configuration'
       sequence:
         type: string
+    weight:
+      type: integer
+      label: 'Weight'
