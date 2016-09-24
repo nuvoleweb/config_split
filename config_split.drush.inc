@@ -35,7 +35,7 @@ function config_split_drush_command() {
       'label' => "A config directory label (i.e. a key in \$config_directories array in settings.php). Defaults to 'sync'",
     ),
     'options' => array(
-//      'split' => 'The split configuration to use.',
+      'split' => 'The split configuration to use.',
       'destination' => 'An arbitrary directory that should receive the exported files. An alternative to label argument.',
       'split-destination' => 'An arbitrary directory that should receive the split files. An alternative to split argument..',
     ),
@@ -50,7 +50,7 @@ function config_split_drush_command() {
       'label' => "A config directory label (i.e. a key in \$config_directories array in settings.php). Defaults to 'sync'",
     ),
     'options' => array(
-//      'split' => 'The split configuration to use.',
+      'split' => 'The split configuration to use.',
       'destination' => 'An arbitrary directory that should receive the exported files. An alternative to label argument.',
       'split-destination' => 'An arbitrary directory that should receive the split files. An alternative to split argument..',
     ),
@@ -100,11 +100,7 @@ function drush_config_split_export($destination = NULL) {
     $destination_dir = config_get_config_directory($destination);
   }
 
-  // Here we could load the configuration according to the split name.
-  // $split = drush_get_option('split');
-  // But for now we load the settings.
-  /** @var ImmutableConfig[] $config */
-  $config = \Drupal::service('config_split.cli')->getAllConfig();
+  $config = config_split_get_split_config();;
 
   $primary = new FileStorage($destination_dir);
   $secondary = NULL;
@@ -141,11 +137,7 @@ function drush_config_split_import($source = NULL) {
     $source_dir = config_get_config_directory($source);
   }
 
-  // Here we could load the configuration according to the split name.
-  // $split = drush_get_option('split');
-  // But for now we load the settings.
-  /** @var ImmutableConfig[] $config */
-  $config = \Drupal::service('config_split.cli')->getAllConfig();
+  $config = config_split_get_split_config();
 
   $primary = new FileStorage($source_dir);
   $secondary = NULL;
@@ -156,4 +148,29 @@ function drush_config_split_import($source = NULL) {
   $cliService = \Drupal::service('config_split.cli');
   $cliService->import($config, $primary, $secondary);
 
+}
+
+/**
+ * Get the configuration filtered by the drush option.
+ *
+ * @return array
+ */
+function config_split_get_split_config() {
+  // Use only the splits specified by the argument.
+  $split = explode(',', drush_get_option('split'));
+  $split_names = array_map(function ($name) {
+    return 'config_split.config_split.' . $name;
+  }, $split);
+  $split = array_combine($split_names, $split);
+
+  // Load all the available splits.
+  /** @var ImmutableConfig[] $config */
+  $config = \Drupal::service('config_split.cli')->getAllConfig();
+
+  if ($invalid = array_diff_key($split, $config)) {
+    error_log('The following splits are not available: ' . implode(', ', $invalid));
+    exit;
+  }
+
+  return array_intersect_key($config, $split);
 }
