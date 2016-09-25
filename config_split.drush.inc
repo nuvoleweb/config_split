@@ -156,6 +156,14 @@ function drush_config_split_import($source = NULL) {
  * @return array
  */
 function config_split_get_split_config() {
+  // Load all the available splits.
+  /** @var ImmutableConfig[] $config */
+  $config = \Drupal::service('config_split.cli')->getAllConfig();
+
+  if (!drush_get_option('split')) {
+    return $config;
+  }
+
   // Use only the splits specified by the argument.
   $split = explode(',', drush_get_option('split'));
   $split_names = array_map(function ($name) {
@@ -163,9 +171,6 @@ function config_split_get_split_config() {
   }, $split);
   $split = array_combine($split_names, $split);
 
-  // Load all the available splits.
-  /** @var ImmutableConfig[] $config */
-  $config = \Drupal::service('config_split.cli')->getAllConfig();
 
   if ($invalid = array_diff_key($split, $config)) {
     error_log('The following splits are not available: ' . implode(', ', $invalid));
