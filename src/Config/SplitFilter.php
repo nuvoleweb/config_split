@@ -122,7 +122,7 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
 
       return NULL;
     }
-    if (in_array($name, $this->config->get('graylist'))) {
+    elseif (in_array($name, $this->config->get('graylist'))) {
       if ($this->secondaryStorage) {
         $this->secondaryStorage->write($name, $data);
       }
@@ -132,6 +132,12 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
       }
 
       return NULL;
+    }
+    else {
+      if ($this->secondaryStorage->exists($name)) {
+        // If the secondary storage has the file but should not then delete it.
+        $this->secondaryStorage->delete($name);
+      }
     }
 
     if ($name != 'core.extension') {
