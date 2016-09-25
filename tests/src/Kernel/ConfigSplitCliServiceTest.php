@@ -6,6 +6,7 @@ use Drupal\config\Controller\ConfigController;
 use Drupal\Core\Archiver\Tar;
 use Drupal\Core\Config\FileStorage;
 use Drupal\Core\Config\ImmutableConfig;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\KernelTests\KernelTestBase;
 use org\bovigo\vfs\vfsStream;
 use org\bovigo\vfs\vfsStreamContent;
@@ -49,6 +50,11 @@ class ConfigSplitCliServiceTest extends KernelTestBase {
    * Test that our export behaves the same as Drupal core without a split.
    */
   public function testVanillaExport() {
+    // Set the "current user" to have "export configuration" permission.
+    $account = $this->prophesize(AccountInterface::class);
+    $account->hasPermission('export configuration')->willReturn(TRUE);
+    $this->container->set('current_user', $account->reveal());
+
     // Export the configuration the way drupal core does it.
     $configController = ConfigController::create($this->container);
     // Download and open the tar file.
