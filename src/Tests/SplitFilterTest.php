@@ -124,6 +124,7 @@ class SplitFilterTest extends UnitTestCase {
     // Filter with a blacklist and a storage.
     $storage = $this->prophesize('Drupal\Core\Config\StorageInterface');
     $storage->write(Argument::cetera())->willReturn(TRUE);
+    $storage->exists($name)->willReturn(FALSE);
     $filter = $this->getFilter($storage->reveal(), [$name2], [], []);
     $this->assertEquals($data, $filter->filterWrite($name, $data));
     $this->assertNull($filter->filterWrite($name2, $data));
@@ -134,6 +135,8 @@ class SplitFilterTest extends UnitTestCase {
     $storage = $this->prophesize('Drupal\Core\Config\StorageInterface');
     $storage->write(Argument::cetera())->willReturn(TRUE);
     $storage->read($name3)->willReturn($data3);
+    $storage->exists($name)->willReturn(TRUE);
+    $storage->delete($name)->willReturn(TRUE)->shouldBeCalled();
     $storage = $storage->reveal();
     $filter = $this->getFilter($storage, [$name2], [], [], [$name3]);
     $this->assertEquals($data, $filter->filterWrite($name, $data, $storage));

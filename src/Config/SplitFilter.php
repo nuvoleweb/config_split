@@ -134,7 +134,7 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
       return NULL;
     }
     else {
-      if ($this->secondaryStorage->exists($name)) {
+      if ($this->secondaryStorage && $this->secondaryStorage->exists($name)) {
         // If the secondary storage has the file but should not then delete it.
         $this->secondaryStorage->delete($name);
       }
