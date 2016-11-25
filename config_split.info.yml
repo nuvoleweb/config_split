@@ -3,5 +3,3 @@ type: module
 description: Configuration filter for importing and exporting split config
 core: 8.x
 package: Other
-dependencies:
-  - config
