@@ -110,6 +110,14 @@ class ConfigSplitEntityForm extends EntityForm {
       '#default_value' => $config->get('weight'),
     ];
 
+    $form['status'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Active'),
+      '#description' => $this->t('Active splits get used by default, this property can be overwritten like any other config entity in settings.php.'),
+      '#default_value' => ($config->get('status') ? TRUE : FALSE),
+    ];
+
+
     return $form;
   }
 

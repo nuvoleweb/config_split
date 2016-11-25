@@ -45,6 +45,7 @@ use Drupal\Core\Config\FileStorage;
  *     "blacklist",
  *     "graylist",
  *     "weight",
+ *     "status",
  *   }
  * )
  */
@@ -105,5 +106,10 @@ class ConfigSplitEntity extends ConfigEntityBase implements ConfigSplitEntityInt
    * @var int
    */
   protected $weight = 0;
-  
+
+  /**
+   * The status, whether to be used by default.
+   */
+  protected $status = TRUE;
+
 }

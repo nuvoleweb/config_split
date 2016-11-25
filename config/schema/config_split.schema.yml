@@ -38,3 +38,6 @@ config_split.config_split.*:
     weight:
       type: integer
       label: 'Weight'
+    status:
+      type: boolean
+      label: 'Active'
