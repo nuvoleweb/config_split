@@ -23,7 +23,7 @@ use Drupal\Core\Config\FileStorage;
  *     },
  *   },
  *   config_prefix = "config_split",
- *   admin_permission = "administer site configuration",
+ *   admin_permission = "administer configuration split",
  *   entity_keys = {
  *     "id" = "id",
  *     "label" = "label",
