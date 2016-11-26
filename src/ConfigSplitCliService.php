@@ -2,12 +2,9 @@
 
 namespace Drupal\config_split;
 
-use Drupal\config_split\Config\SplitFilter;
-use Drupal\config_split\Config\StorageWrapper;
 use Drupal\Core\Config\ConfigImporter;
 use Drupal\Core\Config\ConfigImporterException;
 use Drupal\Core\Config\ConfigManagerInterface;
-use Drupal\Core\Config\FileStorage;
 use Drupal\Core\Config\StorageComparer;
 use Drupal\Core\Config\StorageInterface;
 use Drupal\Core\Config\TypedConfigManagerInterface;
@@ -39,6 +36,13 @@ class ConfigSplitCliService {
    * The return value indicating that the process is complete.
    */
   const COMPLETE = 'complete';
+
+  /**
+   * The split manager.
+   *
+   * @var \Drupal\config_split\ConfigSplitManagerInterface
+   */
+  protected $configSplitManager;
 
   /**
    * Drupal\Core\Config\ConfigManager definition.
@@ -113,7 +117,8 @@ class ConfigSplitCliService {
   /**
    * Constructor.
    */
-  public function __construct(ConfigManagerInterface $config_manager, StorageInterface $config_storage, EventDispatcherInterface $event_dispatcher, LockBackendInterface $lock, TypedConfigManagerInterface $config_typed, ModuleHandlerInterface $module_handler, ModuleInstallerInterface $module_installer, ThemeHandlerInterface $theme_handler, TranslationInterface $string_translation) {
+  public function __construct(ConfigSplitManagerInterface $config_split_manager, ConfigManagerInterface $config_manager, StorageInterface $config_storage, EventDispatcherInterface $event_dispatcher, LockBackendInterface $lock, TypedConfigManagerInterface $config_typed, ModuleHandlerInterface $module_handler, ModuleInstallerInterface $module_installer, ThemeHandlerInterface $theme_handler, TranslationInterface $string_translation) {
+    $this->configSplitManager = $config_split_manager;
     $this->configManager = $config_manager;
     $this->configStorage = $config_storage;
     $this->eventDispatcher = $event_dispatcher;
@@ -133,11 +138,12 @@ class ConfigSplitCliService {
    *   The configuration instance(s) for the SplitFilter.
    * @param \Drupal\Core\Config\StorageInterface $primary
    *   The primary storage, typically what is defined by CONFIG_SYNC_DIRECTORY.
-   * @param \Drupal\Core\Config\StorageInterface|null $secondary
+   * @param \Drupal\Core\Config\StorageInterface[]|null $secondary
    *   The storage to save the split to, overriding the config. (Usually NULL)
    */
-  public function export($config, StorageInterface $primary, StorageInterface $secondary = NULL) {
-    $storage = $this->getStorage($config, $primary, $secondary);
+  public function export($config, StorageInterface $primary, $secondary = []) {
+    $configs = is_array($config) ? $config : [$config];
+    $storage = $this->configSplitManager->getStorage($configs, $primary, $secondary);
     // Remove all the configuration which is not available.
     $this->deleteSuperfluous($storage, $this->configManager->getConfigFactory()->listAll());
 
@@ -167,7 +173,7 @@ class ConfigSplitCliService {
    *
    * @param \Drupal\Core\Config\StorageInterface $storage
    *   The storage to clean.
-   * @param $keep
+   * @param string[] $keep
    *   The array of configuration names to keep.
    */
   protected function deleteSuperfluous(StorageInterface $storage, $keep) {
@@ -185,14 +191,15 @@ class ConfigSplitCliService {
    *   The configuration instance(s) for the SplitFilter.
    * @param \Drupal\Core\Config\StorageInterface $primary
    *   The primary storage, typically what is defined by CONFIG_SYNC_DIRECTORY.
-   * @param \Drupal\Core\Config\StorageInterface|null $secondary
+   * @param \Drupal\Core\Config\StorageInterface[]|null $secondary
    *   The storage to get the split from, overriding the config. (Usually NULL)
    *
    * @return string
    *   The state of importing.
    */
-  public function import($config, StorageInterface $primary, StorageInterface $secondary = NULL) {
-    $storage = $this->getStorage($config, $primary, $secondary);
+  public function import($config, StorageInterface $primary, $secondary = []) {
+    $configs = is_array($config) ? $config : [$config];
+    $storage = $this->configSplitManager->getStorage($configs, $primary, $secondary);
     $comparer = new StorageComparer($storage, $this->configStorage, $this->configManager);
 
     if (!$comparer->createChangelist()->hasChanges()) {
@@ -236,51 +243,6 @@ class ConfigSplitCliService {
    */
   public function getErrors() {
     return $this->errors;
-  }
-
-  /**
-   * Get all the config_split configurations.
-   * @return \Drupal\Core\Config\ImmutableConfig[]
-   */
-  public function getAllConfig() {
-    $names = $this->configManager->getConfigFactory()->listAll('config_split.config_split.');
-    $config = $this->configManager->getConfigFactory()->loadMultiple($names);
-
-    // Sort the configuration by weight.
-    uasort($config, function ($a, $b) {
-      return strcmp($a->get('weight'), $b->get('weight'));
-    });
-
-    return $config;
-  }
-
-  /**
-   * Get the storage which can handle the filter and set the secondary storage.
-   *
-   * @param \Drupal\Core\Config\Config|\Drupal\Core\Config\Config[] $configs
-   *   The configuration instance(s) for the SplitFilter.
-   * @param \Drupal\Core\Config\StorageInterface $primary
-   *   The primary storage, typically what is defined by CONFIG_SYNC_DIRECTORY.
-   * @param \Drupal\Core\Config\StorageInterface|null $secondary
-   *   The storage to save the split to, overriding the config. (Usually NULL)
-   *
-   * @return \Drupal\config_split\Config\StorageWrapper
-   *   The storage, wrapped to do the filtering.
-   */
-  protected function getStorage($configs, StorageInterface $primary, StorageInterface $secondary = NULL) {
-    $configs = is_array($configs) ? $configs : [$configs];
-    $filter = [];
-    foreach ($configs as $config) {
-      $storage = $secondary;
-      if (!$storage && $config->get('folder')) {
-        // The secondary storage is usually defined by the configuration.
-        $storage = new FileStorage($config->get('folder'));
-      }
-
-      $filter[] = new SplitFilter($config, $this->configManager, $storage);
-    }
-
-    return new StorageWrapper($primary, $filter);
   }
 
 }
