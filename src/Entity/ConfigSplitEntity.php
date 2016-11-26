@@ -30,11 +30,11 @@ use Drupal\Core\Config\FileStorage;
  *     "uuid" = "uuid"
  *   },
  *   links = {
- *     "canonical" = "/admin/config/development/configuration/config_split/{config_split}",
- *     "add-form" = "/admin/config/development/configuration/config_split/add",
- *     "edit-form" = "/admin/config/development/configuration/config_split/{config_split}/edit",
- *     "delete-form" = "/admin/config/development/configuration/config_split/{config_split}/delete",
- *     "collection" = "/admin/config/development/configuration/config_split"
+ *     "canonical" = "/admin/config/development/configuration/config-split/{config_split}",
+ *     "add-form" = "/admin/config/development/configuration/config-split/add",
+ *     "edit-form" = "/admin/config/development/configuration/config-split/{config_split}/edit",
+ *     "delete-form" = "/admin/config/development/configuration/config-split/{config_split}/delete",
+ *     "collection" = "/admin/config/development/configuration/config-split"
  *   },
  *   config_export = {
  *     "id",
