@@ -12,28 +12,30 @@ use Drupal\Core\Link;
  */
 function config_split_form_config_admin_import_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state) {
 
-  $enabled = [];
-  $used_config_split_text = t('You are not using any config split configuration');
-  $config_split_entities = \Drupal::entityTypeManager()->getStorage('config_split')->loadMultiple();
-  $active_config = \Drupal::service('config_split.manager')->getActiveSplitConfig();
-  $active_config = array_map(function ($config) { return $config->getName(); }, $active_config);
-  /** @var \Drupal\config_split\Entity\ConfigSplitEntityInterface $config_split_entity */
-  foreach ($config_split_entities as $config_split_entity) {
-    if (in_array('config_split.config_split.' . $config_split_entity->id(), $active_config)) {
-      $enabled[] = Link::fromTextAndUrl($config_split_entity->label(), $config_split_entity->toUrl())->toString();
+  if (\Drupal::service('config.storage.sync') instanceof \Drupal\config_split\Config\ConfigSplitStorageInterface) {
+    $enabled = [];
+    $used_config_split_text = t('You are not using any config split configuration');
+    $config_split_entities = \Drupal::entityTypeManager()->getStorage('config_split')->loadMultiple();
+    $active_config = \Drupal::service('config_split.manager')->getActiveSplitConfig();
+    $active_config = array_map(function ($config) { return $config->getName(); }, $active_config);
+    /** @var \Drupal\config_split\Entity\ConfigSplitEntityInterface $config_split_entity */
+    foreach ($config_split_entities as $config_split_entity) {
+      if (in_array('config_split.config_split.' . $config_split_entity->id(), $active_config)) {
+        $enabled[] = Link::fromTextAndUrl($config_split_entity->label(), $config_split_entity->toUrl())->toString();
+      }
     }
-  }
-  if (!empty($enabled)) {
-    $used_config_split_text = t('Used config split configuration:') . ' ' . implode(', ', $enabled);
-  }
+    if (!empty($enabled)) {
+      $used_config_split_text = t('Used config split configuration:') . ' ' . implode(', ', $enabled);
+    }
 
-  // Add a warning if the default file storage is used.
-  if (\Drupal::service('config.storage.sync') instanceof \Drupal\Core\Config\FileStorage) {
+    $form['config_split']['#weight'] = -10;
+    $form['config_split']['#markup'] = '<p>' . $used_config_split_text . '</p>';
+
+  }
+  else {
+    // Add a warning if the default file storage is used.
     // TODO: link to a handbook page on drupal.org and/or add a hook_help
-    drupal_set_message(t('You are not using the Configuration split config storage. More information can be found in the README'), 'warning');
+    drupal_set_message(t('You are not using the Configuration split config storage, this page might have inaccurate information. More information can be found in the README'), 'warning');
   }
-
-  $form['config_split']['#weight'] = -10;
-  $form['config_split']['#markup'] = '<p>' . $used_config_split_text . '</p>';
 
 }

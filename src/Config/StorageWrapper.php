@@ -2,8 +2,6 @@
 
 namespace Drupal\config_split\Config;
 
-use Drupal\Core\Config\StorageInterface;
-
 /**
  * Class StorageWrapper.
  *
@@ -13,7 +11,7 @@ use Drupal\Core\Config\StorageInterface;
  *
  * @package Drupal\config_split\Config
  */
-class StorageWrapper implements StorageInterface {
+class StorageWrapper implements ConfigSplitStorageInterface {
 
   /**
    * The storage container that we are wrapping.
