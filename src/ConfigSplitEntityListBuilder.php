@@ -64,8 +64,8 @@ class ConfigSplitEntityListBuilder extends ConfigEntityListBuilder {
   public function buildRow(EntityInterface $entity) {
     $row['label'] = $entity->label();
     $row['id'] = $entity->id();
-    $row['status'] = $entity->status() ? 'active' : 'inactive';
     $config = $this->configFactory->get('config_split.config_split.' . $entity->id());
+    $row['status'] = $config->get('status') ? 'active' : 'inactive';
     if ($config->get('status') != $entity->status()) {
       $row['status'] .= ' (overwritten)';
     }
