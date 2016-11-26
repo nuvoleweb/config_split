@@ -16,6 +16,7 @@ class ConfigSplitEntityListBuilder extends ConfigEntityListBuilder {
   public function buildHeader() {
     $header['label'] = $this->t('Configuration Split Setting');
     $header['id'] = $this->t('Machine name');
+    $header['status'] = $this->t('Status');
     return $header + parent::buildHeader();
   }
 
@@ -25,7 +26,7 @@ class ConfigSplitEntityListBuilder extends ConfigEntityListBuilder {
   public function buildRow(EntityInterface $entity) {
     $row['label'] = $entity->label();
     $row['id'] = $entity->id();
-    // You probably want a few more properties here...
+    $row['status'] = $entity->status() ? 'active' : 'inactive';
     return $row + parent::buildRow($entity);
   }
 
