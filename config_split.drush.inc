@@ -7,6 +7,8 @@
 
 use Drupal\config_split\Config\SplitFilter;
 use Drupal\Core\Config\FileStorage;
+use Drupal\Core\Config\StorageInterface;
+use Drush\Log\LogLevel;
 
 /**
  * Implements hook_drush_storage_filters().
@@ -100,20 +102,30 @@ function drush_config_split_export($destination = NULL) {
     $destination_dir = config_get_config_directory($destination);
   }
 
-  $config = config_split_get_split_config();
-
-  $primary = new FileStorage($destination_dir);
-  $storages = [];
-  if ($split_destination = drush_get_option('split-destination')) {
-    if (count($config) > 1) {
-      error_log('The split-destination can only be used with one split, consider overriding the config in settings.php if you wand different paths.');
-      exit;
-    }
-    $secondary = new FileStorage($split_destination);
-    $storages = array_fill_keys(array_keys($config), $secondary);
+  try {
+    $config = config_split_get_split_config();
+  }
+  catch (InvalidArgumentException $e) {
+    return drush_set_error('DRUSH_CONFIG_ERROR', $e->getMessage());
   }
 
-  \Drupal::service('config_split.cli')->export($config, $primary, $storages);
+  $primary = new FileStorage($destination_dir);
+  $destinations = [
+    'primary' => $destination_dir,
+  ];
+
+  $storages = config_split_get_storages($config, $destinations);
+
+  $message = 'The following directories will be purged and used for exporting configuration:';
+  $message .= "\n";
+  $message .= implode("\n", $destinations);
+  $message .= "\n";
+  $message .= 'Export the configuration?';
+
+  if (drush_confirm($message)) {
+    \Drupal::service('config_split.cli')->export($config, $primary, $storages);
+    drush_log(dt("Configuration successfully exported to: \n!target.", array('!target' => implode("\n", $destinations))), LogLevel::SUCCESS);
+  }
 
 }
 
@@ -142,21 +154,30 @@ function drush_config_split_import($source = NULL) {
     $source_dir = config_get_config_directory($source);
   }
 
-  $config = config_split_get_split_config();
-
-  $primary = new FileStorage($source_dir);
-  $storages = [];
-  if ($split_destination = drush_get_option('split-destination')) {
-    if (count($config) > 1) {
-      error_log('The split-destination can only be used with one split, consider overriding the config in settings.php if you wand different paths.');
-      exit;
-    }
-    $secondary = new FileStorage($split_destination);
-    $storages = array_fill_keys(array_keys($config), $secondary);
+  try {
+    $config = config_split_get_split_config();
+  }
+  catch (InvalidArgumentException $e) {
+    return drush_set_error('DRUSH_CONFIG_ERROR', $e->getMessage());
   }
 
-  $cliService = \Drupal::service('config_split.cli');
-  $cliService->import($config, $primary, $storages);
+  $primary = new FileStorage($source_dir);
+  $destinations = [
+    'primary' => $source_dir,
+  ];
+
+  $storages = config_split_get_storages($config, $destinations);
+
+  $message = 'The following directories will be used to merge configuration to import:';
+  $message .= "\n";
+  $message .= implode("\n", $destinations);
+  $message .= "\n";
+  $message .= 'Import the configuration?';
+
+  if (drush_confirm($message)) {
+    \Drupal::service('config_split.cli')->import($config, $primary, $storages);
+    drush_log(dt("Configuration successfully imported from: \n!target.", array('!target' => implode("\n", $destinations))), LogLevel::SUCCESS);
+  }
 
 }
 
@@ -185,9 +206,36 @@ function config_split_get_split_config() {
   $split = array_combine($split_names, $split);
 
   if ($invalid = array_diff_key($split, $config)) {
-    error_log('The following splits are not available: ' . implode(', ', $invalid));
-    exit;
+    throw new InvalidArgumentException('The following splits are not available: ' . implode(', ', $invalid));
   }
 
   return array_intersect_key($config, $split);
+}
+
+/**
+ * Get the storages, if any are set by the rush option.
+ *
+ * @param ImmutableConfig[] $config
+ *   The configuration objects of the splits used.
+ * @param string[] $destinations
+ *   The destinations array to which configuration is writen to or read from.
+ *
+ * @return StorageInterface[]
+ *   The storages to export to to override the ones in config.
+ */
+function config_split_get_storages(array $config, array &$destinations) {
+  if ($split_destination = drush_get_option('split-destination')) {
+    if (count($config) > 1) {
+      return drush_set_error('DRUSH_CONFIG_ERROR', 'The split-destination can only be used with one split, consider overriding the config in settings.php if you wand different paths.');
+    }
+    $secondary = new FileStorage($split_destination);
+    $destinations['split-destination'] = $split_destination;
+    return array_fill_keys(array_keys($config), $secondary);
+  }
+
+  foreach ($config as $key => $value) {
+    $destinations[$key] = $value->get('folder');
+  }
+  $destinations = array_filter($destinations);
+  return [];
 }
