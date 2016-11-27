@@ -5,19 +5,23 @@
  * Configuration split module functions.
  */
 
+use Drupal\config_split\Config\ConfigSplitStorageInterface;
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
 
 /**
  * Implements hook_form_alter().
  */
-function config_split_form_config_admin_import_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state) {
+function config_split_form_config_admin_import_form_alter(&$form, FormStateInterface $form_state) {
 
-  if (\Drupal::service('config.storage.sync') instanceof \Drupal\config_split\Config\ConfigSplitStorageInterface) {
+  if (\Drupal::service('config.storage.sync') instanceof ConfigSplitStorageInterface) {
     $enabled = [];
     $used_config_split_text = t('You are not using any config split configuration');
     $config_split_entities = \Drupal::entityTypeManager()->getStorage('config_split')->loadMultiple();
     $active_config = \Drupal::service('config_split.manager')->getActiveSplitConfig();
-    $active_config = array_map(function ($config) { return $config->getName(); }, $active_config);
+    $active_config = array_map(function ($config) {
+      return $config->getName();
+    }, $active_config);
     /** @var \Drupal\config_split\Entity\ConfigSplitEntityInterface $config_split_entity */
     foreach ($config_split_entities as $config_split_entity) {
       if (in_array('config_split.config_split.' . $config_split_entity->id(), $active_config)) {
@@ -34,7 +38,7 @@ function config_split_form_config_admin_import_form_alter(&$form, \Drupal\Core\F
   }
   else {
     // Add a warning if the default file storage is used.
-    // TODO: link to a handbook page on drupal.org and/or add a hook_help
+    // TODO: link to a handbook page on drupal.org and/or add a hook_help.
     drupal_set_message(t('You are not using the Configuration split config storage, this page might have inaccurate information. More information can be found in the README'), 'warning');
   }
 

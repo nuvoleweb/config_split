@@ -5,4 +5,3 @@ entity.config_split.collection:
   description: 'List Configuration Split settings'
   parent: system.admin_config_development
   weight: 99
-

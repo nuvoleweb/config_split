@@ -127,7 +127,7 @@ interface StorageFilterInterface {
    *
    * Given the following configuration object names:
    * - node.type.article
-   * - node.type.page
+   * - node.type.page.
    *
    * Passing the prefix 'node.type.' will delete the above configuration
    * objects.

@@ -11,7 +11,8 @@ use Drupal\Core\Config\FileStorageFactory;
 use Drupal\Core\Config\StorageInterface;
 
 /**
- * Class ConfigSplitManager
+ * Class ConfigSplitManager.
+ *
  * @package Drupal\config_split
  */
 class ConfigSplitManager implements ConfigSplitManagerInterface {

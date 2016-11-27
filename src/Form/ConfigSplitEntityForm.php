@@ -18,7 +18,7 @@ class ConfigSplitEntityForm extends EntityForm {
    *
    * @var \Drupal\Core\Extension\ThemeHandlerInterface
    */
-//  protected $themeHandler;
+  protected $themeHandler;
 
   /**
    * {@inheritdoc}
@@ -69,19 +69,22 @@ class ConfigSplitEntityForm extends EntityForm {
       '#default_value' => array_keys($config->get('module')),
     ];
 
-//    $theme_handler = $this->themeHandler;
-//    $themes = array_map(function ($theme) use ($theme_handler) {
-//      return $theme_handler->getName($theme->getName());
-//    }, $theme_handler->listInfo());
-//    $form['theme'] = [
-//      '#type' => 'select',
-//      '#title' => $this->t('Themes'),
-//      '#description' => $this->t('Select themes to filter.'),
-//      '#options' => $themes,
-//      '#size' => 5,
-//      '#multiple' => TRUE,
-//      '#default_value' => array_keys($config->get('theme')),
-//    ];
+    // We should probably find a better way for this.
+    $theme_handler = \Drupal::service('theme_handler');
+    $themes = array_map(function ($theme) use ($theme_handler) {
+      return $theme_handler->getName($theme->getName());
+    }, $theme_handler->listInfo());
+    $form['theme'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Themes'),
+      '#description' => $this->t('Select themes to filter.'),
+      '#options' => $themes,
+      '#size' => 5,
+      '#multiple' => TRUE,
+      '#default_value' => array_keys($config->get('theme')),
+    ];
+    // At this stage we do not support themes. @TODO: support themes.
+    $form['theme']['#access'] = FALSE;
 
     $form['blacklist'] = [
       '#type' => 'select',
@@ -117,7 +120,6 @@ class ConfigSplitEntityForm extends EntityForm {
       '#default_value' => ($config->get('status') ? TRUE : FALSE),
     ];
 
-
     return $form;
   }
 
@@ -129,7 +131,7 @@ class ConfigSplitEntityForm extends EntityForm {
     // Transform the values from the form to correctly save the entity.
     $extensions = $this->config('core.extension');
     $form_state->setValue('module', array_intersect_key($extensions->get('module'), $form_state->getValue('module')));
-//    $form_state->setValue('theme', array_intersect_key($extensions->get('theme'), $form_state->getValue('theme')));
+    $form_state->setValue('theme', array_intersect_key($extensions->get('theme'), $form_state->getValue('theme')));
     $form_state->setValue('blacklist', array_keys($form_state->getValue('blacklist')));
     $form_state->setValue('graylist', array_keys($form_state->getValue('graylist')));
 
