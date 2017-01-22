@@ -7,9 +7,23 @@ use Drupal\Core\Config\StorageInterface;
 /**
  * Class StorageFilterBase.
  *
- * Pass everything along as it came in.
+ * Pass everything along as it came in. This is a transparent filter.
  */
 class StorageFilterBase implements StorageFilterInterface {
+
+  /**
+   * The storage on which the filter operations are performed.
+   *
+   * @var \Drupal\Core\Config\StorageInterface
+   */
+  protected $storage;
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setStorage(StorageInterface $storage) {
+    $this->storage = $storage;
+  }
 
   /**
    * {@inheritdoc}

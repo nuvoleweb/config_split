@@ -114,7 +114,7 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
   /**
    * {@inheritdoc}
    */
-  public function filterWrite($name, array $data, StorageInterface $storage = NULL) {
+  public function filterWrite($name, array $data) {
     if (in_array($name, $this->blacklist)) {
       if ($this->secondaryStorage) {
         $this->secondaryStorage->write($name, $data);
@@ -127,8 +127,8 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
         $this->secondaryStorage->write($name, $data);
       }
 
-      if ($storage) {
-        return $storage->read($name);
+      if ($this->storage) {
+        return $this->storage->read($name);
       }
 
       return NULL;

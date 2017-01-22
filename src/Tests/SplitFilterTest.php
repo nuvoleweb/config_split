@@ -139,9 +139,10 @@ class SplitFilterTest extends UnitTestCase {
     $storage->delete($name)->willReturn(TRUE)->shouldBeCalled();
     $storage = $storage->reveal();
     $filter = $this->getFilter($storage, [$name2], [], [], [$name3]);
-    $this->assertEquals($data, $filter->filterWrite($name, $data, $storage));
-    $this->assertNull($filter->filterWrite($name2, $data, $storage));
-    $this->assertEquals($data3, $filter->filterWrite($name3, $data, $storage));
+    $filter->setStorage($storage);
+    $this->assertEquals($data, $filter->filterWrite($name, $data));
+    $this->assertNull($filter->filterWrite($name2, $data));
+    $this->assertEquals($data3, $filter->filterWrite($name3, $data));
 
     // Test that extensions are correctly removed.
     $extensions = [

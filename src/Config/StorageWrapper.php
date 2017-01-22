@@ -33,6 +33,11 @@ class StorageWrapper implements ConfigSplitStorageInterface {
   public function __construct($storage, $filterOrFilters) {
     $this->storage = $storage;
     $this->filters = is_array($filterOrFilters) ? $filterOrFilters : [$filterOrFilters];
+
+    // Set the storage to all the filters.
+    foreach ($this->filters as $filter) {
+      $filter->setStorage($storage);
+    }
   }
 
   /**
@@ -77,7 +82,7 @@ class StorageWrapper implements ConfigSplitStorageInterface {
   public function write($name, array $data) {
     foreach ($this->filters as $filter) {
       if ($data) {
-        $data = $filter->filterWrite($name, $data, $this->storage);
+        $data = $filter->filterWrite($name, $data);
       }
     }
 

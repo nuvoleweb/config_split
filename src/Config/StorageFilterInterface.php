@@ -12,6 +12,18 @@ use Drupal\Core\Config\StorageInterface;
 interface StorageFilterInterface {
 
   /**
+   * Sets the config storage on which the operation is performed.
+   *
+   * The storage is given to the filter when the storage wrapper is set up,
+   * to avoid passing the storage to each of the filters so that they can read
+   * from it before filtering, allowing the filter to use up to date data.
+   *
+   * @param \Drupal\Core\Config\StorageInterface $storage
+   *   The storage on which the operation is performed
+   */
+  public function setStorage(StorageInterface $storage);
+
+  /**
    * Filters configuration data after it is read from storage.
    *
    * @param string $name
@@ -31,15 +43,11 @@ interface StorageFilterInterface {
    *   The name of a configuration object to save.
    * @param array $data
    *   The configuration data to filter.
-   * @param StorageInterface $storage
-   *   (optional) The storage object that the filtered data will be
-   *   written to. Provided in case the filter needs to
-   *   read the existing configuration before writing it.
    *
    * @return array $data
    *   The filtered data.
    */
-  public function filterWrite($name, array $data, StorageInterface $storage = NULL);
+  public function filterWrite($name, array $data);
 
   /**
    * Let the filter decide whether writing not writing data should mean delete.
