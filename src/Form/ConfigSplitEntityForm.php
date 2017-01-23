@@ -55,6 +55,7 @@ class ConfigSplitEntityForm extends EntityForm {
       '#default_value' => $config->get('folder'),
     ];
 
+    // @TODO: Warn if there are extensions in $config that are not available.
     $module_handler = $this->moduleHandler;
     $modules = array_map(function ($module) use ($module_handler) {
       return $module_handler->getName($module->getName());
@@ -122,6 +123,13 @@ class ConfigSplitEntityForm extends EntityForm {
       '#default_value' => implode("\n", array_diff($config->get('graylist'), array_keys($options))),
     ];
 
+    $form['graylist_dependents'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Include dependent configuration for graylist'),
+      '#description' => $this->t('If this is set, graylisted configuration will also include configuration that depend on it.'),
+      '#default_value' => ($config->get('graylist_dependents') ? TRUE : FALSE),
+    ];
+
     $form['weight'] = [
       '#type' => 'number',
       '#title' => $this->t('Weight'),
@@ -150,14 +158,31 @@ class ConfigSplitEntityForm extends EntityForm {
     $form_state->setValue('theme', array_intersect_key($extensions->get('theme'), $form_state->getValue('theme')));
     $form_state->setValue('blacklist', array_merge(
       array_keys($form_state->getValue('blacklist_select')),
-      preg_replace('/[^a-z0-9\._\*]+/', '', explode("\n", $form_state->getValue('blacklist_text')))
+      $this->filterConfigNames($form_state->getValue('blacklist_text'))
     ));
     $form_state->setValue('graylist', array_merge(
       array_keys($form_state->getValue('graylist_select')),
-      preg_replace('/[^a-z0-9\._\*]+/', '', explode("\n", $form_state->getValue('graylist_text')))
+      $this->filterConfigNames($form_state->getValue('graylist_text'))
     ));
 
     parent::submitForm($form, $form_state);
+  }
+
+  /**
+   * Filter text input for valid configuration names (including wildcards).
+   *
+   * @param string|string[] $text
+   *   The configuration names, one name per line.
+   *
+   * @return string[]
+   *   The array of configuration names.
+   */
+  protected function filterConfigNames($text) {
+    if (!is_array($text)) {
+      $text = explode("\n", $text);
+    }
+    // Filter out illegal characters.
+    return array_filter(preg_replace('/[^a-z0-9\._\*]+/', '', $text));
   }
 
   /**

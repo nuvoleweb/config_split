@@ -42,6 +42,13 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
   protected $blacklist;
 
   /**
+   * Graylist of configuration names.
+   *
+   * @var string[]
+   */
+  protected $graylist;
+
+  /**
    * SplitFilter constructor.
    *
    * @param \Drupal\Core\Config\Config $config
@@ -68,7 +75,7 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
     }
 
     $extensions = array_merge([], $modules, $themes);
-    $blacklist = array_merge($blacklist, array_filter($manager->getConfigFactory()->listAll(), function ($name) use ($extensions) {
+    $blacklist = array_filter($manager->getConfigFactory()->listAll(), function ($name) use ($extensions, $blacklist) {
       // Filter the list of config objects since they are not included in
       // findConfigEntityDependents.
       foreach ($extensions as $extension) {
@@ -77,10 +84,26 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
         }
       }
 
-      return FALSE;
-    }));
+      // Add the config name to the blacklist if it is in the wildcard list.
+      return self::inFilterList($name, $blacklist);
+    });
+    sort($blacklist);
     // Finally merge all dependencies of the blacklisted config.
     $this->blacklist = array_unique(array_merge($blacklist, array_keys($manager->findConfigEntityDependents('config', $blacklist))));
+
+    $graylist = $config->get('graylist');
+    $graylist = array_filter($manager->getConfigFactory()->listAll(), function ($name) use ($graylist) {
+      // Add the config name to the graylist if it is in the wildcard list.
+      return self::inFilterList($name, $graylist);
+    });
+    sort($graylist);
+
+    if ($config->get('graylist_dependents')) {
+      // Find dependent configuration and add it to the list.
+      $graylist = array_unique(array_merge($graylist, array_keys($manager->findConfigEntityDependents('config', $graylist))));
+    }
+
+    $this->graylist = $graylist;
   }
 
   /**
@@ -130,14 +153,14 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
    * {@inheritdoc}
    */
   public function filterWrite($name, array $data) {
-    if ($this->inFilterList($name, $this->blacklist)) {
+    if (in_array($name, $this->blacklist)) {
       if ($this->secondaryStorage) {
         $this->secondaryStorage->write($name, $data);
       }
 
       return NULL;
     }
-    elseif ($this->inFilterList($name, $this->config->get('graylist'))) {
+    elseif (in_array($name, $this->graylist)) {
       if ($this->secondaryStorage) {
         $this->secondaryStorage->write($name, $data);
       }
@@ -162,30 +185,6 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
     $data['module'] = array_diff_key($data['module'], $this->config->get('module'));
     $data['theme'] = array_diff_key($data['theme'], $this->config->get('theme'));
     return $data;
-  }
-
-  /**
-   * Check whether the needle is in the haystack.
-   *
-   * @param $name
-   *   The needle which is checked.
-   * @param $list
-   *   The haystack, a list of identifiers to determine whether $name is in it.
-   *
-   * @return bool
-   *   True if the name is considered to be in the list.
-   */
-  protected function inFilterList($name, $list) {
-    $list = array_map(function ($line) {
-      return str_replace('\*', '.*', preg_quote($line, '/'));
-    }, $list);
-    foreach ($list as $line) {
-      if (preg_match('/^' . $line . '$/', $name)) {
-        return TRUE;
-      }
-    }
-
-    return FALSE;
   }
 
   /**
@@ -275,6 +274,32 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
     }
 
     return $collections;
+  }
+
+  /**
+   * Check whether the needle is in the haystack.
+   *
+   * @param $name
+   *   The needle which is checked.
+   * @param $list
+   *   The haystack, a list of identifiers to determine whether $name is in it.
+   *
+   * @return bool
+   *   True if the name is considered to be in the list.
+   */
+  protected static function inFilterList($name, $list) {
+    // Prepare the list for regex matching by qoting all regex symbols and
+    // replacing back the original '*' with '.*' to allow it to catch all.
+    $list = array_map(function ($line) {
+      return str_replace('\*', '.*', preg_quote($line, '/'));
+    }, $list);
+    foreach ($list as $line) {
+      if (preg_match('/^' . $line . '$/', $name)) {
+        return TRUE;
+      }
+    }
+
+    return FALSE;
   }
 
 }
