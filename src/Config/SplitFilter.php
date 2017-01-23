@@ -127,8 +127,8 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
         $this->secondaryStorage->write($name, $data);
       }
 
-      if ($this->storage) {
-        return $this->storage->read($name);
+      if ($this->source) {
+        return $this->source->read($name);
       }
 
       return NULL;

@@ -36,7 +36,8 @@ class StorageWrapper implements ConfigSplitStorageInterface {
 
     // Set the storage to all the filters.
     foreach ($this->filters as $filter) {
-      $filter->setStorage($storage);
+      $filter->setSourceStorage($storage);
+      $filter->setWrappedStorage($this);
     }
   }
 

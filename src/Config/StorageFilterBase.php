@@ -12,17 +12,31 @@ use Drupal\Core\Config\StorageInterface;
 class StorageFilterBase implements StorageFilterInterface {
 
   /**
-   * The storage on which the filter operations are performed.
+   * The source storage on which the filter operations are performed.
    *
    * @var \Drupal\Core\Config\StorageInterface
    */
-  protected $storage;
+  protected $source;
+
+  /**
+   * The wrapped storage which calls the filter.
+   *
+   * @var \Drupal\Core\Config\StorageInterface
+   */
+  protected $wrapped;
 
   /**
    * {@inheritdoc}
    */
-  public function setStorage(StorageInterface $storage) {
-    $this->storage = $storage;
+  public function setSourceStorage(StorageInterface $storage) {
+    $this->source = $storage;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setWrappedStorage(StorageInterface $storage) {
+    $this->wrapped = $storage;
   }
 
   /**
@@ -35,7 +49,7 @@ class StorageFilterBase implements StorageFilterInterface {
   /**
    * {@inheritdoc}
    */
-  public function filterWrite($name, array $data, StorageInterface $storage = NULL) {
+  public function filterWrite($name, array $data) {
     return $data;
   }
 

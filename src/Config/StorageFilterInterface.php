@@ -12,16 +12,28 @@ use Drupal\Core\Config\StorageInterface;
 interface StorageFilterInterface {
 
   /**
-   * Sets the config storage on which the operation is performed.
+   * Sets the source config storage on which the operation is performed.
    *
    * The storage is given to the filter when the storage wrapper is set up,
    * to avoid passing the storage to each of the filters so that they can read
-   * from it before filtering, allowing the filter to use up to date data.
+   * from it before writing filtered config.
    *
    * @param \Drupal\Core\Config\StorageInterface $storage
-   *   The storage on which the operation is performed
+   *   The storage on which the operation is performed.
    */
-  public function setStorage(StorageInterface $storage);
+  public function setSourceStorage(StorageInterface $storage);
+
+  /**
+   * Sets the wrapped config storage which is using the filter.
+   *
+   * This storage is available to the filter in order to inspect how the end
+   * result looks like. This is useful for reading configuration from the
+   * storage as drupal will. Beware of recursive calls to the filter.
+   *
+   * @param \Drupal\Core\Config\StorageInterface $storage
+   *   The storage which has the filters applied.
+   */
+  public function setWrappedStorage(StorageInterface $storage);
 
   /**
    * Filters configuration data after it is read from storage.

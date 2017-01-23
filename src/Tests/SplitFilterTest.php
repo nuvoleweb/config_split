@@ -139,7 +139,7 @@ class SplitFilterTest extends UnitTestCase {
     $storage->delete($name)->willReturn(TRUE)->shouldBeCalled();
     $storage = $storage->reveal();
     $filter = $this->getFilter($storage, [$name2], [], [], [$name3]);
-    $filter->setStorage($storage);
+    $filter->setSourceStorage($storage);
     $this->assertEquals($data, $filter->filterWrite($name, $data));
     $this->assertNull($filter->filterWrite($name2, $data));
     $this->assertEquals($data3, $filter->filterWrite($name3, $data));
