@@ -104,6 +104,14 @@ class SplitFilterTest extends UnitTestCase {
     $filter = $this->getFilter(NULL, [], $modules, $themes);
     $this->assertEquals($extensions_extra, $filter->filterRead('core.extension', $extensions));
     $this->assertEquals($extensions_extra, $filter->filterRead('core.extension', $extensions_extra));
+
+    // Test with reading from the wrapper storage.
+    $filter = $this->getFilter(NULL, [], ['none' => 0], ['none' => 0], [], $name);
+    $storage = $this->prophesize('Drupal\Core\Config\StorageInterface');
+    $storage->read($name)->willReturn(['module' => $modules, 'theme' => $themes]);
+    $filter->setWrappedStorage($storage->reveal());
+    $this->assertEquals($extensions_extra, $filter->filterRead('core.extension', $extensions));
+    $this->assertEquals($extensions_extra, $filter->filterRead('core.extension', $extensions_extra));
   }
 
   /**
@@ -315,23 +323,28 @@ class SplitFilterTest extends UnitTestCase {
    *
    * @param \Drupal\Core\Config\StorageInterface|null $storage
    *   The Storage interface the filter can use as its alternative storage.
-   * @param array $blacklist
+   * @param string[] $blacklist
    *   The blacklisted configuration that is filtered out.
    * @param array $modules
    *   The blacklisted modules that are removed from the core.extensions.
    * @param array $themes
    *   The blacklisted themes that are removed from the core.extensions.
+   * @param string[] $graylist
+   *   The graylisted configuration that is filtered out.
+   * @param string $name
+   *   The name of the prophesied config object
    *
    * @return \Drupal\config_split\Config\SplitFilter
    *   The filter to test.
    */
-  protected function getFilter(StorageInterface $storage = NULL, array $blacklist = [], array $modules = [], array $themes = [], array $graylist = []) {
+  protected function getFilter(StorageInterface $storage = NULL, array $blacklist = [], array $modules = [], array $themes = [], array $graylist = [], $name = 'config_split.config_split.test') {
     // Set up a Config object that returns the blacklist and modules.
     $config = $this->prophesize('Drupal\Core\Config\ImmutableConfig');
     $config->get('blacklist')->willReturn($blacklist);
     $config->get('graylist')->willReturn($graylist);
     $config->get('module')->willReturn($modules);
     $config->get('theme')->willReturn($themes);
+    $config->getName()->willReturn($name);
 
     // The manager returns nothing but allows the filter to set up correctly.
     // This means that the blacklist is not enhanced but only the one passed

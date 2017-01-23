@@ -97,8 +97,23 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
       return $data;
     }
 
-    $data['module'] = array_merge($data['module'], $this->config->get('module'));
-    $data['theme'] = array_merge($data['theme'], $this->config->get('theme'));
+    $modules = $this->config->get('module');
+    $themes = $this->config->get('theme');
+
+    if ($this->wrapped) {
+      // When filtering the 'read' operation, we are about to import the sync
+      // configuration. The configuration of the filter is the active config,
+      // but we are about to decide which modules should be enabled in addition
+      // to the ones defined in the primary storages 'core.extension'.
+      // So we need to read the configuration as it will be imported, as the
+      // filter configuration could be split off itself.
+      $updated = $this->wrapped->read($this->config->getName());
+      $modules = $updated['module'];
+      $themes = $updated['theme'];
+    }
+
+    $data['module'] = array_merge($data['module'], $modules);
+    $data['theme'] = array_merge($data['theme'], $themes);
     // Sort the modules.
     uksort($data['module'], function ($a, $b) use ($data) {
       // Sort by module weight, this assumes the schema of core.extensions.
