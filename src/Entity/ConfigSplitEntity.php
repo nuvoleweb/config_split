@@ -45,6 +45,7 @@ use Drupal\Core\Config\FileStorage;
  *     "blacklist",
  *     "graylist",
  *     "graylist_dependents",
+ *     "graylist_skip_equal",
  *     "weight",
  *     "status",
  *   }
@@ -105,6 +106,11 @@ class ConfigSplitEntity extends ConfigEntityBase implements ConfigSplitEntityInt
    * Include the graylist dependents flag.
    */
   protected $graylist_dependents = TRUE;
+
+  /**
+   * Skip graylisted config without a change flag.
+   */
+  protected $graylist_skip_equal = TRUE;
 
   /**
    * The weight of the configuration when spliting several folders.

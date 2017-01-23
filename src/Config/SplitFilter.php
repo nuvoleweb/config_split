@@ -161,22 +161,34 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
       return NULL;
     }
     elseif (in_array($name, $this->graylist)) {
+      if ($this->config->get('graylist_skip_equal') && $this->source) {
+        // If skipping equal graylists is selected and the data is equal, skip.
+        if ($this->source->read($name) == $data) {
+          if ($this->secondaryStorage && $this->secondaryStorage->exists($name)) {
+            // The secondary storage has the file but the data is the same
+            // as the one in the source, so delete it from the secondary.
+            $this->secondaryStorage->delete($name);
+          }
+          return $data;
+        }
+      }
       if ($this->secondaryStorage) {
         $this->secondaryStorage->write($name, $data);
       }
 
+      // If the source has it, return that so it doesn't get changed.
       if ($this->source) {
         return $this->source->read($name);
       }
 
       return NULL;
     }
-    else {
-      if ($this->secondaryStorage && $this->secondaryStorage->exists($name)) {
-        // If the secondary storage has the file but should not then delete it.
-        $this->secondaryStorage->delete($name);
-      }
+
+    if ($this->secondaryStorage && $this->secondaryStorage->exists($name)) {
+      // If the secondary storage has the file but should not then delete it.
+      $this->secondaryStorage->delete($name);
     }
+
 
     if ($name != 'core.extension') {
       return $data;

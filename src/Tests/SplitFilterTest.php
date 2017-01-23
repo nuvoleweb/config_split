@@ -254,6 +254,25 @@ class SplitFilterTest extends UnitTestCase {
     $this->assertNull($filter->filterWrite($name2, $data));
     $this->assertEquals($data3, $filter->filterWrite($name3, $data));
 
+    // Filter with graylist and skipping equal data
+    $primary = $this->prophesize('Drupal\Core\Config\StorageInterface');
+    $primary->read($name3)->willReturn($data3);
+    $primary = $primary->reveal();
+    $secondary = $this->prophesize('Drupal\Core\Config\StorageInterface');
+    $secondary->exists($name)->willReturn(FALSE);
+    $secondary->write($name2, $data)->willReturn(TRUE);
+    $secondary->write($name3, $data)->willReturn(TRUE);
+    $secondary->exists($name3)->willReturn(TRUE);
+    $secondary->delete($name3)->willReturn(TRUE)->shouldBeCalled();
+    $secondary = $secondary->reveal();
+
+    $filter = $this->getFilter($secondary, [$name2], [], [], [$name3], 'test', TRUE);
+    $filter->setSourceStorage($primary);
+    $this->assertEquals($data, $filter->filterWrite($name, $data));
+    $this->assertNull($filter->filterWrite($name2, $data));
+    $this->assertEquals($data3, $filter->filterWrite($name3, $data));
+    $this->assertEquals($data3, $filter->filterWrite($name3, $data3));
+
     // Test that extensions are correctly removed.
     $extensions = [
       'module' => [
@@ -439,12 +458,13 @@ class SplitFilterTest extends UnitTestCase {
    * @return \Drupal\config_split\Config\SplitFilter
    *   The filter to test.
    */
-  protected function getFilter(StorageInterface $storage = NULL, array $blacklist = [], array $modules = [], array $themes = [], array $graylist = [], $name = 'config_split.config_split.test') {
+  protected function getFilter(StorageInterface $storage = NULL, array $blacklist = [], array $modules = [], array $themes = [], array $graylist = [], $name = 'config_split.config_split.test', $skip_equal = FALSE) {
     // Set up a Config object that returns the blacklist and modules.
     $config = $this->prophesize('Drupal\Core\Config\ImmutableConfig');
     $config->get('blacklist')->willReturn($blacklist);
     $config->get('graylist')->willReturn($graylist);
     $config->get('graylist_dependents')->willReturn(TRUE);
+    $config->get('graylist_skip_equal')->willReturn($skip_equal);
     $config->get('module')->willReturn($modules);
     $config->get('theme')->willReturn($themes);
     $config->getName()->willReturn($name);

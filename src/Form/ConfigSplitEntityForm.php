@@ -130,6 +130,13 @@ class ConfigSplitEntityForm extends EntityForm {
       '#default_value' => ($config->get('graylist_dependents') ? TRUE : FALSE),
     ];
 
+    $form['graylist_skip_equal'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Split graylist only when different'),
+      '#description' => $this->t('If this is set, graylisted configuration will not be in the split directory if it is equal to the one in the main sync directory.'),
+      '#default_value' => ($config->get('graylist_skip_equal') ? TRUE : FALSE),
+    ];
+
     $form['weight'] = [
       '#type' => 'number',
       '#title' => $this->t('Weight'),

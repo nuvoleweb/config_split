@@ -38,6 +38,9 @@ config_split.config_split.*:
     graylist_dependents:
       type: boolean
       label: 'Include dependent configuration'
+    graylist_skip_equal:
+      type: boolean
+      label: 'Skip graylisted config without a change.'
     weight:
       type: integer
       label: 'Weight'
