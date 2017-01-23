@@ -86,24 +86,40 @@ class ConfigSplitEntityForm extends EntityForm {
     // At this stage we do not support themes. @TODO: support themes.
     $form['theme']['#access'] = FALSE;
 
-    $form['blacklist'] = [
+    $options = array_combine($this->configFactory()->listAll(), $this->configFactory()->listAll());
+    $form['blacklist_select'] = [
       '#type' => 'select',
       '#title' => $this->t('Blacklist'),
       '#description' => $this->t('Select configuration to filter.'),
-      '#options' => array_combine($this->configFactory()->listAll(), $this->configFactory()->listAll()),
+      '#options' => $options,
       '#size' => 5,
       '#multiple' => TRUE,
-      '#default_value' => $config->get('blacklist'),
+      '#default_value' => array_intersect($config->get('blacklist'), array_keys($options)),
+    ];
+    $form['blacklist_text'] = [
+      '#type' => 'textarea',
+      '#title' => $this->t('Blacklist'),
+      '#description' => $this->t('Select additional configuration to filter. One configuration key per line.'),
+      '#size' => 5,
+      '#default_value' => implode("\n", array_diff($config->get('blacklist'), array_keys($options))),
     ];
 
-    $form['graylist'] = [
+
+    $form['graylist_select'] = [
       '#type' => 'select',
       '#title' => $this->t('Graylist'),
       '#description' => $this->t('Select configuration to ignore.'),
-      '#options' => array_combine($this->configFactory()->listAll(), $this->configFactory()->listAll()),
+      '#options' => $options,
       '#size' => 5,
       '#multiple' => TRUE,
-      '#default_value' => $config->get('graylist'),
+      '#default_value' => array_intersect($config->get('graylist'), array_keys($options)),
+    ];
+    $form['graylist_text'] = [
+      '#type' => 'textarea',
+      '#title' => $this->t('Graylist'),
+      '#description' => $this->t('Select additional configuration to ignore. One configuration key per line.'),
+      '#size' => 5,
+      '#default_value' => implode("\n", array_diff($config->get('graylist'), array_keys($options))),
     ];
 
     $form['weight'] = [
@@ -132,8 +148,14 @@ class ConfigSplitEntityForm extends EntityForm {
     $extensions = $this->config('core.extension');
     $form_state->setValue('module', array_intersect_key($extensions->get('module'), $form_state->getValue('module')));
     $form_state->setValue('theme', array_intersect_key($extensions->get('theme'), $form_state->getValue('theme')));
-    $form_state->setValue('blacklist', array_keys($form_state->getValue('blacklist')));
-    $form_state->setValue('graylist', array_keys($form_state->getValue('graylist')));
+    $form_state->setValue('blacklist', array_merge(
+      array_keys($form_state->getValue('blacklist_select')),
+      preg_replace('/[^a-z0-9\._\*]+/', '', explode("\n", $form_state->getValue('blacklist_text')))
+    ));
+    $form_state->setValue('graylist', array_merge(
+      array_keys($form_state->getValue('graylist_select')),
+      preg_replace('/[^a-z0-9\._\*]+/', '', explode("\n", $form_state->getValue('graylist_text')))
+    ));
 
     parent::submitForm($form, $form_state);
   }

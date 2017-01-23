@@ -130,14 +130,14 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
    * {@inheritdoc}
    */
   public function filterWrite($name, array $data) {
-    if (in_array($name, $this->blacklist)) {
+    if ($this->inFilterList($name, $this->blacklist)) {
       if ($this->secondaryStorage) {
         $this->secondaryStorage->write($name, $data);
       }
 
       return NULL;
     }
-    elseif (in_array($name, $this->config->get('graylist'))) {
+    elseif ($this->inFilterList($name, $this->config->get('graylist'))) {
       if ($this->secondaryStorage) {
         $this->secondaryStorage->write($name, $data);
       }
@@ -162,6 +162,30 @@ class SplitFilter extends StorageFilterBase implements StorageFilterInterface {
     $data['module'] = array_diff_key($data['module'], $this->config->get('module'));
     $data['theme'] = array_diff_key($data['theme'], $this->config->get('theme'));
     return $data;
+  }
+
+  /**
+   * Check whether the needle is in the haystack.
+   *
+   * @param $name
+   *   The needle which is checked.
+   * @param $list
+   *   The haystack, a list of identifiers to determine whether $name is in it.
+   *
+   * @return bool
+   *   True if the name is considered to be in the list.
+   */
+  protected function inFilterList($name, $list) {
+    $list = array_map(function ($line) {
+      return str_replace('\*', '.*', preg_quote($line, '/'));
+    }, $list);
+    foreach ($list as $line) {
+      if (preg_match('/^' . $line . '$/', $name)) {
+        return TRUE;
+      }
+    }
+
+    return FALSE;
   }
 
   /**
