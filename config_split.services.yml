@@ -5,3 +5,13 @@ services:
   config_split.cli:
     class: Drupal\config_split\ConfigSplitCliService
     arguments: ["@config_split.manager", "@config.manager", "@config.storage", "@event_dispatcher", "@lock", "@config.typed", "@module_handler", "@module_installer", "@theme_handler", "@string_translation"]
+  config_split.console_export_command:
+    class: Drupal\config_split\Command\ExportCommand
+    arguments: []
+    tags:
+      - { name: drupal.command }
+  config_split.console_import_command:
+    class: Drupal\config_split\Command\ImportCommand
+    arguments: []
+    tags:
+      - { name: drupal.command }
