@@ -7,7 +7,6 @@ use Drupal\Core\Config\ConfigImporterException;
 use Drupal\Core\Config\FileStorage;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Command\Command;
 use Drupal\Console\Core\Command\Shared\ContainerAwareCommandTrait;
 use Drupal\Console\Core\Style\DrupalStyle;
 
@@ -16,7 +15,7 @@ use Drupal\Console\Core\Style\DrupalStyle;
  *
  * @package Drupal\config_split
  */
-class ImportCommand extends Command {
+class ImportCommand extends SplitCommandBase {
 
   use ContainerAwareCommandTrait;
 
@@ -27,8 +26,6 @@ class ImportCommand extends Command {
     $this
       ->setName('config_split:import')
       ->setDescription($this->trans('commands.config_split.import.description'))
-      ->addOption('directory', 'dir')
-      ->addOption('split-directory', 'split-dir')
       ->addOption('split');
   }
 
@@ -37,40 +34,33 @@ class ImportCommand extends Command {
    */
   protected function execute(InputInterface $input, OutputInterface $output) {
     $io = new DrupalStyle($input, $output);
+    $cliService = \Drupal::service('config_split.cli');
     try {
-      $directory = $input->getOption('directory');
+      $config_name = NULL;
+      $primary = NULL;
+      $split = $input->getOption('split');
 
-      if (!$directory) {
-        $directory = config_get_config_directory(CONFIG_SYNC_DIRECTORY);
+      if (!$split) {
+        // Here we could call the default command...
+        // $io->info("Consider using the native drush commands for importing.");
+        $message = 'Do a normal (including filters) config import?';
       }
+      else {
+        $config_name = $this->getSplitName($split);
+        $destination = \Drupal::config($config_name)->get('folder');
 
-      // Here we could load the configuration according to the split name.
-      // $split = $input->getOption('split');
-      // But for now we load the settings.
-      /** @var ImmutableConfig[] $config */
-      $configs = \Drupal::service('config_split.manager')->getActiveSplitConfig();
+        // Set the primary to the active storage so we only import the split.
+        $primary = \Drupal::getContainer()->get('config.storage');
 
-      $primary = new FileStorage($directory);
-      $destinations = [
-        'primary' => $directory,
-      ];
-
-      $storages = [];
-      foreach ($configs as $key => $config) {
-        $destinations[$key] = $config->get('folder');
+        $message = $this->trans('commands.config_split.import.messages.directories');
+        $message .= "\n";
+        $message .= $destination;
+        $message .= "\n";
+        $message .= $this->trans('commands.config_split.import.messages.question');
       }
-      $destinations = array_filter($destinations);
-
-
-      $message = $this->trans('commands.config_split.import.messages.directories');
-      $message .= "\n";
-      $message .= implode("\n", $destinations);
-      $message .= "\n";
-      $message .= $this->trans('commands.config_split.import.messages.question');
 
       if ($io->confirm($message)) {
-        $cliService = \Drupal::service('config_split.cli');
-        $state = $cliService->import($configs, $primary, $storages);
+        $state = $cliService->import($config_name, $primary);
 
         switch ($state) {
           case ConfigSplitCliService::COMPLETE:
@@ -78,11 +68,15 @@ class ImportCommand extends Command {
             break;
 
           case ConfigSplitCliService::NO_CHANGES:
-            $io->success($this->trans('commands.config_split.import.messages.nothing-to-do'));
+            $io->info($this->trans('commands.config_split.import.messages.nothing-to-do'));
             break;
 
           case ConfigSplitCliService::ALREADY_IMPORTING:
-            $io->success($this->trans('commands.config_split.import.messages.already-imported'));
+            $io->warning($this->trans('commands.config_split.import.messages.already-imported'));
+            break;
+
+          default:
+            $io->warning("Something unexpected happened");
             break;
         }
 
@@ -105,4 +99,5 @@ class ImportCommand extends Command {
       );
     }
   }
+
 }

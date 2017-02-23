@@ -25,16 +25,3 @@ follow soon (after all the filter is inspired by the --skip-modules filter of dr
 The important part to remember is to use Drupal 8's configuration management
 the way it was intended to be used. This module does not interfere with the active
 configuration but instead filters on the import/export pipeline.
-
-### Overriding services.
-If you want the config sync admin UI to work with configuration split you should
-add the following lines to your `services.yml`
-
-```
-services:
-  config.storage.sync:
-    class: Drupal\config_split\Config\StorageWrapper
-    factory: config_split.manager:getDefaultStorageWrapper
-```
-We currently don't automatically override this service because drupal console
-currently breaks with it.

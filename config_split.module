@@ -5,7 +5,7 @@
  * Configuration split module functions.
  */
 
-use Drupal\config_split\Config\ConfigSplitStorageInterface;
+use Drupal\config_filter\Config\FilteredStorageInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
 
@@ -14,32 +14,36 @@ use Drupal\Core\Link;
  */
 function config_split_form_config_admin_import_form_alter(&$form, FormStateInterface $form_state) {
 
-  if (\Drupal::service('config.storage.sync') instanceof ConfigSplitStorageInterface) {
-    $enabled = [];
-    $used_config_split_text = t('You are not using any config split configuration');
-    $config_split_entities = \Drupal::entityTypeManager()->getStorage('config_split')->loadMultiple();
-    $active_config = \Drupal::service('config_split.manager')->getActiveSplitConfig();
-    $active_config = array_map(function ($config) {
-      return $config->getName();
-    }, $active_config);
-    /** @var \Drupal\config_split\Entity\ConfigSplitEntityInterface $config_split_entity */
-    foreach ($config_split_entities as $config_split_entity) {
-      if (in_array('config_split.config_split.' . $config_split_entity->id(), $active_config)) {
-        $enabled[] = Link::fromTextAndUrl($config_split_entity->label(), $config_split_entity->toUrl())->toString();
+  $enabled = [];
+  $used_config_split_text = t('You are not using any config split configuration');
+  $config_split_entities = \Drupal::entityTypeManager()->getStorage('config_split')->loadMultiple();
+  $active_filters = \Drupal::service('plugin.manager.config_filter')->getDefinitions();
+  $active_filters = array_filter($active_filters, function ($filter) {
+    return $filter['status'];
+  });
+  /** @var \Drupal\config_split\Entity\ConfigSplitEntityInterface $config_split_entity */
+  foreach ($config_split_entities as $config_split_entity) {
+    if (in_array('config_split:' . $config_split_entity->id(), array_keys($active_filters))) {
+      $enabled[] = Link::fromTextAndUrl($config_split_entity->label(), $config_split_entity->toUrl())->toString();
+
+      // Read the configuration and check differences in important fields.
+      $config_name = $config_split_entity->getConfigDependencyName();
+      $active = \Drupal::getContainer()->get('config.storage')->read($config_name);
+      $staged = \Drupal::getContainer()->get('config.storage.sync')->read($config_name);
+      $fields = ['status', 'weight', 'folder'];
+      $warnings = array_sum(array_map(function ($filed) use ($active, $staged) {
+        return $active[$filed] != $staged[$filed];
+      }, $fields));
+      if ($warnings) {
+        drupal_set_message(t('The configuration for @split has changed, consider a single import for it first.', ['@split' => $config_split_entity->label()]), 'warning');
       }
     }
-    if (!empty($enabled)) {
-      $used_config_split_text = t('Used config split configuration:') . ' ' . implode(', ', $enabled);
-    }
-
-    $form['config_split']['#weight'] = -10;
-    $form['config_split']['#markup'] = '<p>' . $used_config_split_text . '</p>';
-
   }
-  else {
-    // Add a warning if the default file storage is used.
-    // TODO: link to a handbook page on drupal.org and/or add a hook_help.
-    drupal_set_message(t('You are not using the Configuration split config storage, this page might have inaccurate information. More information can be found in the README'), 'warning');
+  if (!empty($enabled)) {
+    $used_config_split_text = t('Used config split configuration:') . ' ' . implode(', ', $enabled);
   }
+
+  $form['config_split']['#weight'] = -10;
+  $form['config_split']['#markup'] = '<p>' . $used_config_split_text . '</p>';
 
 }

@@ -4,12 +4,13 @@ namespace Drupal\Tests\config_split\Kernel;
 
 use Drupal\config\Controller\ConfigController;
 use Drupal\Core\Archiver\Tar;
+use Drupal\Core\Config\Config;
 use Drupal\Core\Config\FileStorage;
-use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\KernelTests\KernelTestBase;
 use org\bovigo\vfs\vfsStream;
 use org\bovigo\vfs\vfsStreamContent;
+use org\bovigo\vfs\vfsStreamWrapper;
 
 /**
  * Class ConfigSplitCliServiceTest.
@@ -31,6 +32,7 @@ class ConfigSplitCliServiceTest extends KernelTestBase {
     'text',
     'config',
     'config_test',
+    'config_filter',
     'config_split',
   ];
 
@@ -78,7 +80,7 @@ class ConfigSplitCliServiceTest extends KernelTestBase {
     $this->assertEmpty($split_export->getChildren(), 'Before exporting the folder is empty.');
 
     // Do the export without a split configuration to the export folder.
-    $this->container->get('config_split.cli')->export([], $primary);
+    $this->container->get('config_split.cli')->export('', $primary);
 
     // Assert that the exported configuration is the same in both cases.
     $this->assertEquals(count($core_export->getChildren()), count($split_export->getChildren()), 'The same amount of config is exported.');
@@ -96,25 +98,29 @@ class ConfigSplitCliServiceTest extends KernelTestBase {
    * Test a simple export split.
    */
   public function testSimpleSplitExport() {
-    // Export the configuration the way Drupal core does.
-    $vanilla = vfsStream::setup('vanilla');
-    $vanilla_primary = new FileStorage($vanilla->url());
-    $this->container->get('config_split.cli')->export([], $vanilla_primary);
 
     // Set the split stream up.
     $split = vfsStream::setup('split');
+    $split_root = vfsStreamWrapper::getRoot();
     $primary = new FileStorage($split->url() . '/sync');
-    $config = new ImmutableConfig('test_split', $this->container->get('config.storage'), $this->container->get('event_dispatcher'), $this->container->get('config.typed'));
+    $config = new Config('config_split.config_split.test_split', $this->container->get('config.storage'), $this->container->get('event_dispatcher'), $this->container->get('config.typed'));
     $config->initWithData([
       'folder' => $split->url() . '/split',
       'module' => ['config_test' => 0],
       'theme' => [],
       'blacklist' => [],
       'graylist' => [],
-    ]);
+    ])->save();
 
+    // Export the configuration the way Drupal core does.
+    $vanilla = vfsStream::setup('vanilla');
+    $vanilla_root = vfsStreamWrapper::getRoot();
+    $vanilla_primary = new FileStorage($vanilla->url());
+    $this->container->get('config_split.cli')->export('', $vanilla_primary);
+
+    vfsStreamWrapper::setRoot($split_root);
     // Export the configuration without the test configuration.
-    $this->container->get('config_split.cli')->export([$config], $primary);
+    $this->container->get('config_split.cli')->export('config_split.config_split.test_split', $primary);
 
     // Extract the configuration for easier comparison.
     $vanilla_config = [];
@@ -167,17 +173,17 @@ class ConfigSplitCliServiceTest extends KernelTestBase {
 
     $split = vfsStream::setup('split');
     $primary = new FileStorage($split->url() . '/sync');
-    $config = new ImmutableConfig('test_split', $this->container->get('config.storage'), $this->container->get('event_dispatcher'), $this->container->get('config.typed'));
+    $config = new Config('config_split.config_split.test_split', $this->container->get('config.storage'), $this->container->get('event_dispatcher'), $this->container->get('config.typed'));
     $config->initWithData([
       'folder' => $split->url() . '/split',
       'module' => [],
       'theme' => [],
       'blacklist' => ['config_test.types'],
       'graylist' => ['config_test.system'],
-    ]);
+    ])->save();
 
     // Export the configuration like core.
-    $this->container->get('config_split.cli')->export([], $primary);
+    $this->container->get('config_split.cli')->export('', $primary);
 
     $original_config = [];
     foreach ($split->getChild('sync')->getChildren() as $child) {
@@ -194,7 +200,7 @@ class ConfigSplitCliServiceTest extends KernelTestBase {
     $this->config('config_test.system')->set('foo', 'baz')->save();
 
     // Export the configuration with filtering.
-    $this->container->get('config_split.cli')->export([$config], $primary);
+    $this->container->get('config_split.cli')->export('config_split.config_split.test_split', $primary);
 
     $sync_config = [];
     foreach ($split->getChild('sync')->getChildren() as $child) {
@@ -226,10 +232,10 @@ class ConfigSplitCliServiceTest extends KernelTestBase {
       'theme' => [],
       'blacklist' => ['config_test.system'],
       'graylist' => [],
-    ]);
+    ])->save();
 
     // Export the configuration with filtering.
-    $this->container->get('config_split.cli')->export([$config], $primary);
+    $this->container->get('config_split.cli')->export('config_split.config_split.test_split', $primary);
 
     $sync_config = [];
     foreach ($split->getChild('sync')->getChildren() as $child) {

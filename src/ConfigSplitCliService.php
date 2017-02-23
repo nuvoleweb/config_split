@@ -2,6 +2,9 @@
 
 namespace Drupal\config_split;
 
+use Drupal\config_filter\Config\FilteredStorage;
+use Drupal\config_filter\ConfigFilterManagerInterface;
+use Drupal\config_split\Plugin\ConfigFilter\SplitFilter;
 use Drupal\Core\Config\ConfigImporter;
 use Drupal\Core\Config\ConfigImporterException;
 use Drupal\Core\Config\ConfigManagerInterface;
@@ -38,11 +41,11 @@ class ConfigSplitCliService {
   const COMPLETE = 'complete';
 
   /**
-   * The split manager.
+   * The filter manager.
    *
-   * @var \Drupal\config_split\ConfigSplitManagerInterface
+   * @var \Drupal\config_filter\ConfigFilterManagerInterface
    */
-  protected $configSplitManager;
+  protected $configFilterManager;
 
   /**
    * Drupal\Core\Config\ConfigManager definition.
@@ -117,8 +120,8 @@ class ConfigSplitCliService {
   /**
    * Constructor.
    */
-  public function __construct(ConfigSplitManagerInterface $config_split_manager, ConfigManagerInterface $config_manager, StorageInterface $config_storage, EventDispatcherInterface $event_dispatcher, LockBackendInterface $lock, TypedConfigManagerInterface $config_typed, ModuleHandlerInterface $module_handler, ModuleInstallerInterface $module_installer, ThemeHandlerInterface $theme_handler, TranslationInterface $string_translation) {
-    $this->configSplitManager = $config_split_manager;
+  public function __construct(ConfigFilterManagerInterface $config_filter_manager, ConfigManagerInterface $config_manager, StorageInterface $config_storage, EventDispatcherInterface $event_dispatcher, LockBackendInterface $lock, TypedConfigManagerInterface $config_typed, ModuleHandlerInterface $module_handler, ModuleInstallerInterface $module_installer, ThemeHandlerInterface $theme_handler, TranslationInterface $string_translation) {
+    $this->configFilterManager = $config_filter_manager;
     $this->configManager = $config_manager;
     $this->configStorage = $config_storage;
     $this->eventDispatcher = $event_dispatcher;
@@ -134,18 +137,16 @@ class ConfigSplitCliService {
   /**
    * Export the configuration.
    *
-   * @param \Drupal\Core\Config\Config|\Drupal\Core\Config\Config[] $config
-   *   The configuration instance(s) for the SplitFilter.
+   * @param string $config_name
+   *   The configuration name for the SplitFilter.
    * @param \Drupal\Core\Config\StorageInterface $primary
    *   The primary storage, typically what is defined by CONFIG_SYNC_DIRECTORY.
-   * @param \Drupal\Core\Config\StorageInterface[]|null $secondary
-   *   The storage to save the split to, overriding the config. (Usually NULL)
    */
-  public function export($config, StorageInterface $primary, $secondary = []) {
-    $configs = is_array($config) ? $config : [$config];
-    $storage = $this->configSplitManager->getStorage($configs, $primary, $secondary);
-    // Remove all the configuration which is not available.
-    $this->deleteSuperfluous($storage, $this->configManager->getConfigFactory()->listAll());
+  public function export($config_name = NULL, StorageInterface $primary = NULL) {
+    $storage = $this->getStorage($config_name, $primary);
+
+    // Delete all, the filters are responsible for keeping some configuration.
+    $storage->deleteAll();
 
     // Inspired by \Drupal\config\Controller\ConfigController::downloadExport().
     // Get raw configuration data without overrides.
@@ -158,7 +159,7 @@ class ConfigSplitCliService {
       $source_collection = $this->configStorage->createCollection($collection);
       $destination_collection = $storage->createCollection($collection);
       // Delete everything in the collection sub-directory.
-      $this->deleteSuperfluous($destination_collection, $source_collection->listAll());
+      $destination_collection->deleteAll();
 
       foreach ($source_collection->listAll() as $name) {
         $destination_collection->write($name, $source_collection->read($name));
@@ -169,37 +170,46 @@ class ConfigSplitCliService {
   }
 
   /**
-   * Delete configuration that will not be exported.
+   * Get the storage to work with.
    *
-   * @param \Drupal\Core\Config\StorageInterface $storage
-   *   The storage to clean.
-   * @param string[] $keep
-   *   The array of configuration names to keep.
+   * If either the name or the primary storage are empty, the default is used.
+   *
+   * @param string $config_name
+   *   The name of the configuration for the split to use.
+   * @param \Drupal\Core\Config\StorageInterface $primary
+   *   The config storage to wrap.
+   *
+   * @return \Drupal\config_filter\Config\FilteredStorageInterface
+   *   The storage to use.
    */
-  protected function deleteSuperfluous(StorageInterface $storage, $keep) {
-    foreach ($storage->listAll() as $name) {
-      if (!in_array($name, $keep)) {
-        $storage->delete($name);
-      }
+  public function getStorage($config_name = NULL, StorageInterface $primary = NULL) {
+    $filters = [];
+    if ($config_name && $primary) {
+      $configuration = [
+        'config_name' => $config_name,
+      ];
+      $filters[] = SplitFilter::create(\Drupal::getContainer(), $configuration, 'config_split', []);
     }
+    if ($primary) {
+      return new FilteredStorage($primary, $filters);
+    }
+
+    return $this->configFilterManager->getFilteredSyncStorage();
   }
 
   /**
    * Import the configuration.
    *
-   * @param \Drupal\Core\Config\Config|\Drupal\Core\Config\Config[] $config
-   *   The configuration instance(s) for the SplitFilter.
+   * @param string $config_name
+   *   The configuration name for the SplitFilter.
    * @param \Drupal\Core\Config\StorageInterface $primary
    *   The primary storage, typically what is defined by CONFIG_SYNC_DIRECTORY.
-   * @param \Drupal\Core\Config\StorageInterface[]|null $secondary
-   *   The storage to get the split from, overriding the config. (Usually NULL)
    *
    * @return string
    *   The state of importing.
    */
-  public function import($config, StorageInterface $primary, $secondary = []) {
-    $configs = is_array($config) ? $config : [$config];
-    $storage = $this->configSplitManager->getStorage($configs, $primary, $secondary);
+  public function import($config_name = NULL, StorageInterface $primary = NULL) {
+    $storage = $this->getStorage($config_name, $primary);
     $comparer = new StorageComparer($storage, $this->configStorage, $this->configManager);
 
     if (!$comparer->createChangelist()->hasChanges()) {

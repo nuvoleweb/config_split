@@ -10,5 +10,7 @@
     "issues": "https://www.drupal.org/project/issues/config_split",
     "source": "http://cgit.drupalcode.org/config_split"
   },
-  "require": { }
+  "require": {
+    "drupal/config_filter": "*"
+  }
 }

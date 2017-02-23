@@ -105,7 +105,6 @@ class ConfigSplitEntityForm extends EntityForm {
       '#default_value' => implode("\n", array_diff($config->get('blacklist'), array_keys($options))),
     ];
 
-
     $form['graylist_select'] = [
       '#type' => 'select',
       '#title' => $this->t('Graylist'),

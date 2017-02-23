@@ -2,5 +2,7 @@ name: Configuration split
 type: module
 description: Configuration filter for importing and exporting split config
 core: 8.x
-package: Other
+package: Config
 configure: entity.config_split.collection
+dependencies:
+  - config_filter

@@ -2,10 +2,9 @@
 
 namespace Drupal\config_split\Command;
 
-use Drupal\Core\Config\FileStorage;
+use Drupal\Core\Config\NullStorage;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Command\Command;
 use Drupal\Console\Core\Command\Shared\ContainerAwareCommandTrait;
 use Drupal\Console\Core\Style\DrupalStyle;
 
@@ -14,7 +13,7 @@ use Drupal\Console\Core\Style\DrupalStyle;
  *
  * @package Drupal\config_split
  */
-class ExportCommand extends Command {
+class ExportCommand extends SplitCommandBase {
 
   use ContainerAwareCommandTrait;
 
@@ -25,8 +24,6 @@ class ExportCommand extends Command {
     $this
       ->setName('config_split:export')
       ->setDescription($this->trans('commands.config_split.export.description'))
-      ->addOption('directory', 'dir')
-      ->addOption('split-directory', 'split-dir')
       ->addOption('split');
   }
 
@@ -36,37 +33,32 @@ class ExportCommand extends Command {
   protected function execute(InputInterface $input, OutputInterface $output) {
     $io = new DrupalStyle($input, $output);
     try {
-      $directory = $input->getOption('directory');
+      $config_name = NULL;
+      $primary = NULL;
+      $split = $input->getOption('split');
 
-      if (!$directory) {
-        $directory = config_get_config_directory(CONFIG_SYNC_DIRECTORY);
+      if (!$split) {
+        // Here we could call the default command...
+        // $io->info("Consider using the native drush commands for exporting.");
+        $message = 'Do a normal (including filters) config export?';
       }
+      else {
+        $config_name = $this->getSplitName($split);
 
-      // Here we could load the configuration according to the split name.
-      // $split = $input->getOption('split');
-      // But for now we load the settings.
-      /** @var ImmutableConfig[] $configs */
-      $configs =\Drupal::service('config_split.manager')->getActiveSplitConfig();
+        $destination = \Drupal::config($config_name)->get('folder');
 
-      $primary = new FileStorage($directory);
-      $destinations = [
-        'primary' => $directory,
-      ];
+        // Set the primary to the NullStorage so that we only export the split.
+        $primary = new NullStorage();
 
-      $storages = [];
-      foreach ($configs as $key => $config) {
-        $destinations[$key] = $config->get('folder');
+        $message = $this->trans('commands.config_split.export.messages.directories');
+        $message .= "\n";
+        $message .= $destination;
+        $message .= "\n";
+        $message .= $this->trans('commands.config_split.export.messages.question');
       }
-      $destinations = array_filter($destinations);
-
-      $message = $this->trans('commands.config_split.export.messages.directories');
-      $message .= "\n";
-      $message .= implode("\n", $destinations);
-      $message .= "\n";
-      $message .= $this->trans('commands.config_split.export.messages.question');
 
       if ($io->confirm($message)) {
-        \Drupal::service('config_split.cli')->export($configs, $primary, $storages);
+        \Drupal::service('config_split.cli')->export($config_name, $primary);
         $io->success($this->trans('commands.config_split.export.messages.success'));
       }
 
@@ -76,4 +68,5 @@ class ExportCommand extends Command {
     }
 
   }
+
 }
