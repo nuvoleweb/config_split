@@ -26,12 +26,12 @@ class SplitFilterTest extends UnitTestCase {
    * Test that the blacklist is correctly calculated.
    */
   public function testBlacklist() {
-    $config = $this->prophesize('Drupal\Core\Config\ImmutableConfig');
-    $config->get('blacklist')->willReturn(['a', 'b']);
-    $config->get('graylist')->willReturn([]);
-    $config->get('module')->willReturn(['module1' => 0, 'module2' => 0]);
-    $config->get('theme')->willReturn(['theme1' => 0]);
-    $config->get('graylist_dependents')->willReturn(FALSE);
+    $configuration = [];
+    $configuration['blacklist'] = ['a', 'b'];
+    $configuration['graylist'] = [];
+    $configuration['module'] = ['module1' => 0, 'module2' => 0];
+    $configuration['theme'] = ['theme1' => 0];
+    $configuration['graylist_dependents'] = FALSE;
 
     // The config manager returns dependent entities for modules and themes.
     $manager = $this->prophesize('Drupal\Core\Config\ConfigManagerInterface');
@@ -43,10 +43,10 @@ class SplitFilterTest extends UnitTestCase {
     // Add more config dependencies, independently of what is asked for.
     $manager->findConfigEntityDependents(Argument::exact('config'), Argument::cetera())->willReturn(['f' => 0, 'g' => 0, 'b' => 0]);
 
-    $filter = new SplitFilter($config->reveal(), $manager->reveal());
+    $filter = new SplitFilter($configuration, 'config_split', [], $manager->reveal());
 
     // Get the protected blacklist property.
-    $blacklist = new \ReflectionProperty('Drupal\config_split\Config\SplitFilter', 'blacklist');
+    $blacklist = new \ReflectionProperty('Drupal\config_split\Plugin\ConfigFilter\SplitFilter', 'blacklist');
     $blacklist->setAccessible(TRUE);
     $actual = $blacklist->getValue($filter);
     // The order of values and keys are not important.
@@ -58,12 +58,12 @@ class SplitFilterTest extends UnitTestCase {
    * Test that the graylist is correctly calculated.
    */
   public function testGraylist() {
-    $config = $this->prophesize('Drupal\Core\Config\ImmutableConfig');
-    $config->get('blacklist')->willReturn([]);
-    $config->get('graylist')->willReturn(['a', 'b']);
-    $config->get('module')->willReturn([]);
-    $config->get('theme')->willReturn([]);
-    $config->get('graylist_dependents')->willReturn(TRUE);
+    $configuration = [];
+    $configuration['blacklist'] = [];
+    $configuration['graylist'] = ['a', 'b'];
+    $configuration['module'] = [];
+    $configuration['theme'] = [];
+    $configuration['graylist_dependents'] = TRUE;
 
     // The config manager returns dependent entities for modules and themes.
     $manager = $this->prophesize('Drupal\Core\Config\ConfigManagerInterface');
@@ -76,10 +76,10 @@ class SplitFilterTest extends UnitTestCase {
     $manager->findConfigEntityDependents(Argument::exact('config'), Argument::exact([]))->willReturn([]);
     $manager->findConfigEntityDependents(Argument::exact('config'), Argument::exact(['a', 'b']))->willReturn(['f' => 0, 'g' => 0, 'b' => 0]);
 
-    $filter = new SplitFilter($config->reveal(), $manager->reveal());
+    $filter = new SplitFilter($configuration, 'config_split', [], $manager->reveal());
 
     // Get the protected blacklist property.
-    $graylist = new \ReflectionProperty('Drupal\config_split\Config\SplitFilter', 'graylist');
+    $graylist = new \ReflectionProperty('Drupal\config_split\Plugin\ConfigFilter\SplitFilter', 'graylist');
     $graylist->setAccessible(TRUE);
     $actual = $graylist->getValue($filter);
     // The order of values and keys are not important.
@@ -94,12 +94,12 @@ class SplitFilterTest extends UnitTestCase {
 
     $list = ['a', 'b', 'contact*', '*.d', 'e*i', 'f*de*', 'x'];
 
-    $config = $this->prophesize('Drupal\Core\Config\ImmutableConfig');
-    $config->get('blacklist')->willReturn($list);
-    $config->get('graylist')->willReturn($list);
-    $config->get('module')->willReturn([]);
-    $config->get('theme')->willReturn([]);
-    $config->get('graylist_dependents')->willReturn(TRUE);
+    $configuration = [];
+    $configuration['blacklist'] = $list;
+    $configuration['graylist'] = $list;
+    $configuration['module'] = [];
+    $configuration['theme'] = [];
+    $configuration['graylist_dependents'] = TRUE;
 
     // The config manager returns dependent entities for modules and themes.
     $manager = $this->prophesize('Drupal\Core\Config\ConfigManagerInterface');
@@ -138,13 +138,13 @@ class SplitFilterTest extends UnitTestCase {
 
     $manager->findConfigEntityDependents(Argument::exact('config'), Argument::exact($expected))->willReturn([]);
 
-    $filter = new SplitFilter($config->reveal(), $manager->reveal());
+    $filter = new SplitFilter($configuration, 'config_split', [], $manager->reveal());
 
     // Get the protected blacklist property.
-    $blacklist = new \ReflectionProperty('Drupal\config_split\Config\SplitFilter', 'blacklist');
+    $blacklist = new \ReflectionProperty('Drupal\config_split\Plugin\ConfigFilter\SplitFilter', 'blacklist');
     $blacklist->setAccessible(TRUE);
     $black = $blacklist->getValue($filter);
-    $graylist = new \ReflectionProperty('Drupal\config_split\Config\SplitFilter', 'graylist');
+    $graylist = new \ReflectionProperty('Drupal\config_split\Plugin\ConfigFilter\SplitFilter', 'graylist');
     $graylist->setAccessible(TRUE);
     $gray = $graylist->getValue($filter);
 
@@ -211,7 +211,7 @@ class SplitFilterTest extends UnitTestCase {
     $filter = $this->getFilter(NULL, [], ['none' => 0], ['none' => 0], [], $name);
     $storage = $this->prophesize('Drupal\Core\Config\StorageInterface');
     $storage->read($name)->willReturn(['module' => $modules, 'theme' => $themes]);
-    $filter->setWrappedStorage($storage->reveal());
+    $filter->setFilteredStorage($storage->reveal());
     $this->assertEquals($extensions_extra, $filter->filterRead('core.extension', $extensions));
     $this->assertEquals($extensions_extra, $filter->filterRead('core.extension', $extensions_extra));
   }
@@ -335,6 +335,7 @@ class SplitFilterTest extends UnitTestCase {
    */
   public function testFilterDelete() {
     $storage = $this->prophesize('Drupal\Core\Config\StorageInterface');
+    $storage->exists('Yes')->willReturn(TRUE);
     $storage->delete('Yes')->willReturn(TRUE);
 
     $transparent = $this->getFilter(NULL);
@@ -417,7 +418,7 @@ class SplitFilterTest extends UnitTestCase {
     $new_filter = $filter->filterCreateCollection($collection);
 
     // Get the protected storage property.
-    $internal = new \ReflectionProperty('Drupal\config_split\Config\SplitFilter', 'secondaryStorage');
+    $internal = new \ReflectionProperty('Drupal\config_split\Plugin\ConfigFilter\SplitFilter', 'secondaryStorage');
     $internal->setAccessible(TRUE);
     $actual = $internal->getValue($new_filter);
     $this->assertEquals($collection_storage, $actual);

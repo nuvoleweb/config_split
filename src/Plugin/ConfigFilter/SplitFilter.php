@@ -278,7 +278,7 @@ class SplitFilter extends ConfigFilterBase implements ContainerFactoryPluginInte
   /**
    * {@inheritdoc}
    */
-  public function filterGetAllCollectionNames($collections) {
+  public function filterGetAllCollectionNames(array $collections) {
     if ($this->secondaryStorage) {
       $collections = array_merge($collections, $this->secondaryStorage->getAllCollectionNames());
     }
