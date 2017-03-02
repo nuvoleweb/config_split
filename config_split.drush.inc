@@ -150,7 +150,7 @@ function drush_config_split_import($split = NULL) {
  */
 function config_split_get_split_name($name) {
 
-  if (strpos($name, 'config_split.config_split.') != 0) {
+  if (strpos($name, 'config_split.config_split.') !== 0) {
     $name = 'config_split.config_split.' . $name;
   }
 
@@ -160,7 +160,7 @@ function config_split_get_split_name($name) {
     \Drupal::entityTypeManager()->getStorage('config_split')->loadMultiple());
 
   if (!in_array($name, $splits)) {
-    throw new InvalidArgumentException('The following splits is not available: ' . $name);
+    throw new InvalidArgumentException('The following split is not available: ' . $name);
   }
 
   return $name;
