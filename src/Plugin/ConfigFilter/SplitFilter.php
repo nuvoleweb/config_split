@@ -253,7 +253,13 @@ class SplitFilter extends ConfigFilterBase implements ContainerFactoryPluginInte
    */
   public function filterDeleteAll($prefix, $delete) {
     if ($delete && $this->secondaryStorage) {
-      $this->secondaryStorage->deleteAll($prefix);
+      try {
+        $this->secondaryStorage->deleteAll($prefix);
+      }
+      catch (\UnexpectedValueException $exception) {
+        // The file storage tries to remove directories of collections. But this
+        // fails if the directory doesn't exist. So everything is actually fine.
+      }
     }
 
     if (!empty($this->graylist)) {

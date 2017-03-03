@@ -400,6 +400,13 @@ class SplitFilterTest extends UnitTestCase {
 
     $this->assertTrue($filter->filterDeleteAll('Yes', TRUE));
     $this->assertFalse($filter->filterDeleteAll('No', FALSE));
+
+    // Test that the storage can throw an exception without affecting execution.
+    $failing = $this->prophesize('Drupal\Core\Config\StorageInterface');
+    $failing->deleteAll('Yes')->willThrow('\UnexpectedValueException');
+
+    $filter = $this->getFilter($failing->reveal());
+    $this->assertTrue($filter->filterDeleteAll('Yes', TRUE));
   }
 
   /**
