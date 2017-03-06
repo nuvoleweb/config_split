@@ -456,6 +456,36 @@ class SplitFilterTest extends UnitTestCase {
   }
 
   /**
+   * Test that the static create method works and folders contain the htacces.
+   */
+  public function testSplitFilterCreate() {
+    $name = 'config_split.' . $this->getRandomGenerator()->name();
+    // Set the split stream up.
+    $folder = vfsStream::setup($name);
+    $container = $this->prophesize('Symfony\Component\DependencyInjection\ContainerInterface');
+    $container->get('config.manager')->willReturn($this->getConfigManagerMock());
+    $container->get('config.factory')->willReturn($this->getConfigFactoryStub([
+      $name => [
+        'folder' => $folder->url(),
+        'module' => [],
+        'theme' => [],
+        'blacklist' => [],
+        'graylist' => [],
+      ],
+    ]));
+
+    $configuration = [
+      'config_name' => $name,
+    ];
+
+    $filter = SplitFilter::create($container->reveal(), $configuration, $this->getRandomGenerator()->name(), []);
+    $this->assertTrue($folder->hasChild('.htaccess'), 'htaccess written to split folder.');
+
+    $folder->addChild(new vfsStreamFile($name . '.' . FileStorage::getFileExtension()));
+    $this->assertTrue($filter->filterExists($name, FALSE), 'Assert filename');
+  }
+
+  /**
    * Returns a SplitFilter that can be used to test its behaviour.
    *
    * @param \Drupal\Core\Config\StorageInterface|null $storage

@@ -8,6 +8,7 @@ use Drupal\Core\Config\FileStorage;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Config\StorageInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\Component\PhpStorage\FileStorage as PhpFileStorage;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -381,8 +382,21 @@ class SplitFilter extends ConfigFilterBase implements ContainerFactoryPluginInte
    */
   protected static function getSecondaryStorage(ImmutableConfig $config) {
     // Here we could determine to use relative paths etc.
-    if ($config->get('folder')) {
-      return new FileStorage($config->get('folder'));
+    if ($directory = $config->get('folder')) {
+
+      // The following is roughly: file_save_htaccess($directory, TRUE, TRUE);
+      // But we can't use global drupal functions and we want to write the
+      // .htaccess file to ensure the configuration is protected and the
+      // directory not empty.
+      if (file_exists($directory) && is_writable($directory)) {
+        $htaccess_path = rtrim($directory, '/\\') . '/.htaccess';
+        if (!file_exists($htaccess_path)) {
+          file_put_contents($htaccess_path, PhpFileStorage::htaccessLines(TRUE));
+          @chmod($htaccess_path, 0444);
+        }
+      }
+
+      return new FileStorage($directory);
     }
 
     return NULL;
