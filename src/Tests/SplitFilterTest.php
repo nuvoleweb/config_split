@@ -3,9 +3,12 @@
 namespace Drupal\config_split\Tests;
 
 use Drupal\config_split\Plugin\ConfigFilter\SplitFilter;
+use Drupal\Core\Config\FileStorage;
 use Drupal\Core\Config\NullStorage;
 use Drupal\Core\Config\StorageInterface;
 use \Drupal\Tests\UnitTestCase;
+use org\bovigo\vfs\vfsStream;
+use org\bovigo\vfs\vfsStreamFile;
 use Prophecy\Argument;
 
 /**
@@ -35,13 +38,16 @@ class SplitFilterTest extends UnitTestCase {
 
     // The config manager returns dependent entities for modules and themes.
     $manager = $this->prophesize('Drupal\Core\Config\ConfigManagerInterface');
-    $manager->findConfigEntityDependents(Argument::exact('module'), Argument::exact(['module1', 'module2']))->willReturn(['c' => 0, 'd' => 0, 'a' => 0]);
-    $manager->findConfigEntityDependents(Argument::exact('theme'), Argument::exact(['theme1']))->willReturn(['e' => 0, 'f' => 0, 'c' => 0]);
+    $manager->findConfigEntityDependents(Argument::exact('module'), Argument::exact(['module1', 'module2']))
+      ->willReturn(['c' => 0, 'd' => 0, 'a' => 0]);
+    $manager->findConfigEntityDependents(Argument::exact('theme'), Argument::exact(['theme1']))
+      ->willReturn(['e' => 0, 'f' => 0, 'c' => 0]);
     // Add a config storage returning some settings for the filtered modules.
     $all_config = array_merge(array_fill_keys(range("a", "z"), []), ['module1.settings' => [], 'module3.settings' => []]);
     $manager->getConfigFactory()->willReturn($this->getConfigStorageStub($all_config));
     // Add more config dependencies, independently of what is asked for.
-    $manager->findConfigEntityDependents(Argument::exact('config'), Argument::cetera())->willReturn(['f' => 0, 'g' => 0, 'b' => 0]);
+    $manager->findConfigEntityDependents(Argument::exact('config'), Argument::cetera())
+      ->willReturn(['f' => 0, 'g' => 0, 'b' => 0]);
 
     $filter = new SplitFilter($configuration, 'config_split', [], $manager->reveal());
 
@@ -51,7 +57,8 @@ class SplitFilterTest extends UnitTestCase {
     $actual = $blacklist->getValue($filter);
     // The order of values and keys are not important.
     sort($actual);
-    $this->assertArrayEquals(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'module1.settings'], $actual);
+    $expected = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'module1.settings'];
+    $this->assertArrayEquals($expected, $actual);
   }
 
   /**
@@ -74,7 +81,8 @@ class SplitFilterTest extends UnitTestCase {
     $manager->getConfigFactory()->willReturn($this->getConfigStorageStub($all_config));
     // Add more config dependencies, independently of what is asked for.
     $manager->findConfigEntityDependents(Argument::exact('config'), Argument::exact([]))->willReturn([]);
-    $manager->findConfigEntityDependents(Argument::exact('config'), Argument::exact(['a', 'b']))->willReturn(['f' => 0, 'g' => 0, 'b' => 0]);
+    $manager->findConfigEntityDependents(Argument::exact('config'), Argument::exact(['a', 'b']))
+      ->willReturn(['f' => 0, 'g' => 0, 'b' => 0]);
 
     $filter = new SplitFilter($configuration, 'config_split', [], $manager->reveal());
 
@@ -476,6 +484,26 @@ class SplitFilterTest extends UnitTestCase {
     $configuration['theme'] = $themes;
     $configuration['config_name'] = $name;
 
+    // Return a new filter that behaves as intended.
+    return new SplitFilter($configuration, 'config_split', [], $this->getConfigManagerMock($blacklist, $graylist, $modules, $themes), $storage);
+  }
+
+  /**
+   * Gets a mocked version of the config manager.
+   *
+   * @param array $blacklist
+   *   The config names to blacklist.
+   * @param array $graylist
+   *   The config names to graylist.
+   * @param array $modules
+   *   The array of modules.
+   * @param array $themes
+   *   The array of themes.
+   *
+   * @return \Drupal\Core\Config\ConfigManagerInterface
+   *   The mocked config manager.
+   */
+  protected function getConfigManagerMock(array $blacklist = [], array $graylist = [], array $modules = [], array $themes = []) {
     // The manager returns nothing but allows the filter to set up correctly.
     // This means that the blacklist is not enhanced but only the one passed
     // as an argument is used.
@@ -485,9 +513,7 @@ class SplitFilterTest extends UnitTestCase {
     // blacklisted and gray listed configuration.
     $all_config = array_fill_keys(array_merge($blacklist, $graylist, array_keys($modules), array_keys($themes)), []);
     $manager->getConfigFactory()->willReturn($this->getConfigStorageStub($all_config));
-
-    // Return a new filter that behaves as intended.
-    return new SplitFilter($configuration, 'config_split', [], $manager->reveal(), $storage);
+    return $manager->reveal();
   }
 
 }

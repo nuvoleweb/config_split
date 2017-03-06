@@ -54,14 +54,14 @@ class SplitFilter extends DeriverBase implements ContainerDeriverInterface {
    * {@inheritdoc}
    */
   public function getDerivativeDefinitions($base_plugin_definition) {
-    foreach ($this->entityStorage->loadMultiple() as $menu => $entity) {
+    foreach ($this->entityStorage->loadMultiple() as $name => $entity) {
       $config = $this->configFactory->get($entity->getConfigDependencyName());
-      $this->derivatives[$menu] = $base_plugin_definition;
-      $this->derivatives[$menu]['label'] = $entity->label();
-      $this->derivatives[$menu]['config_name'] = $entity->getConfigDependencyName();
-      $this->derivatives[$menu]['weight'] = $config->get('weight');
-      $this->derivatives[$menu]['status'] = $config->get('status');
-      $this->derivatives[$menu]['config_dependencies']['config'] = [$entity->getConfigDependencyName()];
+      $this->derivatives[$name] = $base_plugin_definition;
+      $this->derivatives[$name]['label'] = $entity->label();
+      $this->derivatives[$name]['config_name'] = $entity->getConfigDependencyName();
+      $this->derivatives[$name]['weight'] = $config->get('weight');
+      $this->derivatives[$name]['status'] = $config->get('status');
+      $this->derivatives[$name]['config_dependencies']['config'] = [$entity->getConfigDependencyName()];
     }
     return $this->derivatives;
   }

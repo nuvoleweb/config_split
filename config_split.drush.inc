@@ -53,8 +53,7 @@ function drush_config_split_export($split = NULL) {
 
   if (!$split) {
     // Here we could call the default command...
-    // Except, they still have some bugs!
-    // drush_log(dt("Consider using the native drush commands for exporting."), LogLevel::NOTICE);
+    drush_log(dt("Consider using the native drush commands for exporting."), LogLevel::NOTICE);
     $message = 'Do a normal (including filters) config export?';
   }
   else {
