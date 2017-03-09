@@ -2,7 +2,8 @@
 
 namespace Drupal\config_split\Command;
 
-use Drupal\Core\Config\NullStorage;
+use Drupal\config_split\Config\GhostStorage;
+use Drupal\Core\Config\FileStorageFactory;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Drupal\Console\Core\Command\Shared\ContainerAwareCommandTrait;
@@ -47,8 +48,10 @@ class ExportCommand extends SplitCommandBase {
 
         $destination = \Drupal::config($config_name)->get('folder');
 
-        // Set the primary to the NullStorage so that we only export the split.
-        $primary = new NullStorage();
+        // Set the primary to a GhostStorage so that we only export the split.
+        $plugin_id = str_replace('config_split.config_split.', 'config_split:', $config_name);
+        $storage = \Drupal::service('plugin.manager.config_filter')->getFilteredStorage(FileStorageFactory::getSync(), 'config.storage.sync', [$plugin_id]);
+        $primary = new GhostStorage($storage);
 
         $message = $this->trans('commands.config_split.export.messages.directories');
         $message .= "\n";

@@ -7,7 +7,8 @@
 
 use Drupal\config_split\ConfigSplitCliService;
 use Drupal\config_split\Entity\ConfigSplitEntity;
-use Drupal\Core\Config\NullStorage;
+use Drupal\config_split\Config\GhostStorage;
+use Drupal\Core\Config\FileStorageFactory;
 use Drush\Log\LogLevel;
 
 /**
@@ -66,8 +67,10 @@ function drush_config_split_export($split = NULL) {
 
     $destination = \Drupal::config($config_name)->get('folder');
 
-    // Set the primary to the NullStorage so that we only export the split.
-    $primary = new NullStorage();
+    // Set the primary to a GhostStorage so that we only export the split.
+    $plugin_id = str_replace('config_split.config_split.', 'config_split:', $config_name);
+    $storage = \Drupal::service('plugin.manager.config_filter')->getFilteredStorage(FileStorageFactory::getSync(), 'config.storage.sync', [$plugin_id]);
+    $primary = new GhostStorage($storage);
 
     $message = 'The following directories will be purged and used for exporting configuration:';
     $message .= "\n";
