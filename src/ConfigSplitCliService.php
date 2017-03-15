@@ -148,10 +148,15 @@ class ConfigSplitCliService {
     // Delete all, the filters are responsible for keeping some configuration.
     $storage->deleteAll();
 
-    // Inspired by \Drupal\config\Controller\ConfigController::downloadExport().
-    // Get raw configuration data without overrides.
-    foreach ($this->configManager->getConfigFactory()->listAll() as $name) {
-      $storage->write($name, $this->configManager->getConfigFactory()->get($name)->getRawData());
+    // Get the default active storage to copy it to the sync storage.
+    if ($this->configStorage->getCollectionName() != StorageInterface::DEFAULT_COLLECTION) {
+      // This is probably not necessary, but we do it as a precaution.
+      $this->configStorage = $this->configStorage->createCollection(StorageInterface::DEFAULT_COLLECTION);
+    }
+
+    // Copy everything.
+    foreach ($this->configStorage->listAll() as $name) {
+      $storage->write($name, $this->configStorage->read($name));
     }
 
     // Get all override data from the remaining collections.
