@@ -127,8 +127,10 @@ class SplitFilter extends ConfigFilterBase implements ContainerFactoryPluginInte
       // So we need to read the configuration as it will be imported, as the
       // filter configuration could be split off itself.
       $updated = $this->filtered->read($this->configuration['config_name']);
-      $modules = $updated['module'];
-      $themes = $updated['theme'];
+      if (is_array($updated)) {
+        $modules = $updated['module'];
+        $themes = $updated['theme'];
+      }
     }
 
     $data['module'] = array_merge($data['module'], $modules);
