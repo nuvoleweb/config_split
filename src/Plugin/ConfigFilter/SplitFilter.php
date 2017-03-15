@@ -126,6 +126,8 @@ class SplitFilter extends ConfigFilterBase implements ContainerFactoryPluginInte
       // to the ones defined in the primary storage's 'core.extension'.
       // So we need to read the configuration as it will be imported, as the
       // filter configuration could be split off itself.
+      $modules = [];
+      $themes = [];
       $updated = $this->filtered->read($this->configuration['config_name']);
       if (is_array($updated)) {
         $modules = $updated['module'];
