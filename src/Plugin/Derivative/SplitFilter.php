@@ -30,13 +30,15 @@ class SplitFilter extends DeriverBase implements ContainerDeriverInterface {
   protected $configFactory;
 
   /**
-   * Constructs new SystemMenuBlock.
+   * SplitFilter constructor.
    *
-   * @param \Drupal\Core\Entity\EntityStorageInterface $menu_storage
-   *   The menu storage.
+   * @param \Drupal\Core\Entity\EntityStorageInterface $entity_storage
+   *   The entity storage to load the split entities from.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The config factory to load the configuration including overrides from.
    */
-  public function __construct(EntityStorageInterface $menu_storage, ConfigFactoryInterface $config_factory) {
-    $this->entityStorage = $menu_storage;
+  public function __construct(EntityStorageInterface $entity_storage, ConfigFactoryInterface $config_factory) {
+    $this->entityStorage = $entity_storage;
     $this->configFactory = $config_factory;
   }
 
@@ -55,13 +57,16 @@ class SplitFilter extends DeriverBase implements ContainerDeriverInterface {
    */
   public function getDerivativeDefinitions($base_plugin_definition) {
     foreach ($this->entityStorage->loadMultiple() as $name => $entity) {
-      $config = $this->configFactory->get($entity->getConfigDependencyName());
+      $config_name = $entity->getConfigDependencyName();
+      $config = $this->configFactory->get($config_name);
       $this->derivatives[$name] = $base_plugin_definition;
       $this->derivatives[$name]['label'] = $entity->label();
-      $this->derivatives[$name]['config_name'] = $entity->getConfigDependencyName();
+      $this->derivatives[$name]['config_name'] = $config_name;
+      // The weight and status can be overwritten in settings.php, however,
+      // the cache has to ble cleared for changes in overrides to take effect.
       $this->derivatives[$name]['weight'] = $config->get('weight');
       $this->derivatives[$name]['status'] = $config->get('status');
-      $this->derivatives[$name]['config_dependencies']['config'] = [$entity->getConfigDependencyName()];
+      $this->derivatives[$name]['config_dependencies']['config'] = [$config_name];
     }
     return $this->derivatives;
   }

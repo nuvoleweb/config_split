@@ -103,11 +103,15 @@ class ConfigSplitEntity extends ConfigEntityBase implements ConfigSplitEntityInt
 
   /**
    * Include the graylist dependents flag.
+   *
+   * @var bool
    */
   protected $graylist_dependents = TRUE;
 
   /**
    * Skip graylisted config without a change flag.
+   *
+   * @var bool
    */
   protected $graylist_skip_equal = TRUE;
 
@@ -120,6 +124,8 @@ class ConfigSplitEntity extends ConfigEntityBase implements ConfigSplitEntityInt
 
   /**
    * The status, whether to be used by default.
+   *
+   * @var bool
    */
   protected $status = TRUE;
 

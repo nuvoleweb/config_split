@@ -39,8 +39,7 @@ class ExportCommand extends SplitCommandBase {
       $split = $input->getOption('split');
 
       if (!$split) {
-        // Here we could call the default command...
-        // $io->info("Consider using the native drush commands for exporting.");
+        // Do a normal export through the cli service.
         $message = 'Do a normal (including filters) config export?';
       }
       else {

@@ -41,8 +41,7 @@ class ImportCommand extends SplitCommandBase {
       $split = $input->getOption('split');
 
       if (!$split) {
-        // Here we could call the default command...
-        // $io->info("Consider using the native drush commands for importing.");
+        // Do a normal import through the cli service.
         $message = 'Do a normal (including filters) config import?';
       }
       else {

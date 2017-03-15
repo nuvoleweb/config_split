@@ -6,7 +6,7 @@ use Drupal\config_split\Plugin\ConfigFilter\SplitFilter;
 use Drupal\Core\Config\FileStorage;
 use Drupal\Core\Config\NullStorage;
 use Drupal\Core\Config\StorageInterface;
-use \Drupal\Tests\UnitTestCase;
+use Drupal\Tests\UnitTestCase;
 use org\bovigo\vfs\vfsStream;
 use org\bovigo\vfs\vfsStreamFile;
 use Prophecy\Argument;
@@ -500,6 +500,8 @@ class SplitFilterTest extends UnitTestCase {
    *   The graylisted configuration that is filtered out.
    * @param string $name
    *   The name of the prophesied config object.
+   * @param bool $skip_equal
+   *   The flag to skip equal config in graylist exports.
    *
    * @return \Drupal\config_split\Plugin\ConfigFilter\SplitFilter
    *   The filter to test.

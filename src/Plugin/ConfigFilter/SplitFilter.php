@@ -58,7 +58,7 @@ class SplitFilter extends ConfigFilterBase implements ContainerFactoryPluginInte
    *   A configuration array containing information about the plugin instance.
    * @param string $plugin_id
    *   The plugin_id for the plugin instance.
-   * @param array $plugin_definition
+   * @param mixed $plugin_definition
    *   The plugin implementation definition.
    * @param \Drupal\Core\Config\ConfigManagerInterface $manager
    *   The config manager for retrieving dependent config.
@@ -356,7 +356,7 @@ class SplitFilter extends ConfigFilterBase implements ContainerFactoryPluginInte
    * @return bool
    *   True if the name is considered to be in the list.
    */
-  protected static function inFilterList($name, $list) {
+  protected static function inFilterList($name, array $list) {
     // Prepare the list for regex matching by quoting all regex symbols and
     // replacing back the original '*' with '.*' to allow it to catch all.
     $list = array_map(function ($line) {
