@@ -215,6 +215,14 @@ class SplitFilterTest extends UnitTestCase {
     $filter->setFilteredStorage($storage->reveal());
     $this->assertEquals($extensions_extra, $filter->filterRead('core.extension', $extensions));
     $this->assertEquals($extensions_extra, $filter->filterRead('core.extension', $extensions_extra));
+
+    // Test with reading from the wrapper storage.
+    $filter = $this->getFilter(NULL, [], ['none' => 0], ['none' => 0], [], $name);
+    $storage = $this->prophesize('Drupal\Core\Config\StorageInterface');
+    $storage->read($name)->willReturn(FALSE);
+    $filter->setFilteredStorage($storage->reveal());
+    $this->assertEquals($extensions, $filter->filterRead('core.extension', $extensions));
+    $this->assertEquals($extensions_extra, $filter->filterRead('core.extension', $extensions_extra));
   }
 
   /**
