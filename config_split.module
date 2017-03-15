@@ -5,7 +5,6 @@
  * Configuration split module functions.
  */
 
-use Drupal\config_filter\Config\FilteredStorageInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
 

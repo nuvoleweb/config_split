@@ -3,7 +3,6 @@
 namespace Drupal\config_split\Entity;
 
 use Drupal\Core\Config\Entity\ConfigEntityBase;
-use Drupal\Core\Config\FileStorage;
 
 /**
  * Defines the Configuration Split Setting entity.

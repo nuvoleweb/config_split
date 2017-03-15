@@ -4,7 +4,6 @@ namespace Drupal\config_split\Command;
 
 use Drupal\config_split\ConfigSplitCliService;
 use Drupal\Core\Config\ConfigImporterException;
-use Drupal\Core\Config\FileStorage;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Drupal\Console\Core\Command\Shared\ContainerAwareCommandTrait;

@@ -19,13 +19,6 @@ use Prophecy\Argument;
 class SplitFilterTest extends UnitTestCase {
 
   /**
-   * {@inheritdoc}
-   */
-  public function setUp() {
-    parent::setUp();
-  }
-
-  /**
    * Test that the blacklist is correctly calculated.
    */
   public function testBlacklist() {
