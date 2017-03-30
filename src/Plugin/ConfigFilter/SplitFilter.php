@@ -222,7 +222,7 @@ class SplitFilter extends ConfigFilterBase implements ContainerFactoryPluginInte
       $this->secondaryStorage->delete($name);
     }
 
-    if (in_array($name, $this->graylist)) {
+    if (in_array($name, $this->graylist) && !in_array($name, $this->blacklist)) {
       // Do not delete graylisted config.
       return FALSE;
     }
