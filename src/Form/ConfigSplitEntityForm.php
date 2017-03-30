@@ -49,8 +49,6 @@ class ConfigSplitEntityForm extends EntityForm {
       '#type' => 'textfield',
       '#title' => $this->t('Folder'),
       '#description' => $this->t('The folder, relative to the Drupal root, to which to save the filtered config.<br/>Configuration related to the "filtered" items below will be split from the main configuration and exported to this folder by <code>drupal config_split:export</code>.'),
-      '#maxlength' => 64,
-      '#size' => 64,
       '#default_value' => $config->get('folder'),
     ];
 
