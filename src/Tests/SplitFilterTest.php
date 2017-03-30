@@ -6,6 +6,7 @@ use Drupal\config_split\Plugin\ConfigFilter\SplitFilter;
 use Drupal\Core\Config\FileStorage;
 use Drupal\Core\Config\NullStorage;
 use Drupal\Core\Config\StorageInterface;
+use Drupal\Tests\Core\Database\Stub\StubConnection;
 use Drupal\Tests\UnitTestCase;
 use org\bovigo\vfs\vfsStream;
 use org\bovigo\vfs\vfsStreamFile;
@@ -232,12 +233,22 @@ class SplitFilterTest extends UnitTestCase {
     // Transparent filter.
     $name = $this->randomMachineName();
     $data = (array) $this->getRandomGenerator()->object();
-    $filter = $this->getFilter();
+
+    try {
+      $filter = $this->getFilter();
+      $filter->filterWrite($name, $data);
+      $this->fail('The filter needs a storage.');
+    }
+    catch (\InvalidArgumentException $exception) {
+      $this->assertTrue(TRUE, 'Exception thrown.');
+    }
+
+    $filter = $this->getFilter(new NullStorage());
     $this->assertEquals($data, $filter->filterWrite($name, $data));
 
     // Filter with a blacklist.
     $name2 = $this->randomMachineName();
-    $filter = $this->getFilter(NULL, [$name2], [], []);
+    $filter = $this->getFilter(new NullStorage(), [$name2], [], []);
     $this->assertEquals($data, $filter->filterWrite($name, $data));
     $this->assertNull($filter->filterWrite($name2, $data));
     // Filter with a blacklist and a storage.
@@ -312,7 +323,7 @@ class SplitFilterTest extends UnitTestCase {
       ],
       'theme' => ['stable' => 0, 'classy' => 0, 'custom_theme' => 0],
     ];
-    $filter = $this->getFilter(NULL, [], $modules, $themes);
+    $filter = $this->getFilter(new NullStorage(), [], $modules, $themes);
     $this->assertEquals($extensions, $filter->filterWrite('core.extension', $extensions));
     $this->assertEquals($extensions, $filter->filterWrite('core.extension', $extensions_extra));
   }
@@ -474,6 +485,8 @@ class SplitFilterTest extends UnitTestCase {
         'graylist' => [],
       ],
     ]));
+    $database = $this->prophesize('Drupal\Core\Database\Connection');
+    $container->get('database')->willReturn($database->reveal());
 
     $configuration = [
       'config_name' => $name,

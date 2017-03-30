@@ -153,10 +153,12 @@ class SplitFilter extends ConfigFilterBase implements ContainerFactoryPluginInte
    * {@inheritdoc}
    */
   public function filterWrite($name, array $data) {
+    if (!$this->secondaryStorage) {
+      throw new \InvalidArgumentException('The split storage has to be set and exist for write operations.');
+    }
+
     if (in_array($name, $this->blacklist)) {
-      if ($this->secondaryStorage) {
-        $this->secondaryStorage->write($name, $data);
-      }
+      $this->secondaryStorage->write($name, $data);
 
       return NULL;
     }
@@ -165,9 +167,7 @@ class SplitFilter extends ConfigFilterBase implements ContainerFactoryPluginInte
         // The configuration is in the graylist but skip-equal is not set or
         // the source does not have the same data, so write to secondary and
         // return source data or null if it doesn't exist in the source.
-        if ($this->secondaryStorage) {
-          $this->secondaryStorage->write($name, $data);
-        }
+        $this->secondaryStorage->write($name, $data);
 
         // If the source has it, return that so it doesn't get changed.
         if ($this->source) {
@@ -178,7 +178,7 @@ class SplitFilter extends ConfigFilterBase implements ContainerFactoryPluginInte
       }
     }
 
-    if ($this->secondaryStorage && $this->secondaryStorage->exists($name)) {
+    if ($this->secondaryStorage->exists($name)) {
       // If the secondary storage has the file but should not then delete it.
       $this->secondaryStorage->delete($name);
     }
@@ -400,7 +400,10 @@ class SplitFilter extends ConfigFilterBase implements ContainerFactoryPluginInte
         }
       }
 
-      return new FileStorage($directory);
+      if (file_exists($directory) || strpos($directory, 'vfs://') === 0) {
+        // Allow virtual file systems even if file_exists is false.
+        return new FileStorage($directory);
+      }
     }
 
     return NULL;
