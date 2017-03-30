@@ -52,11 +52,12 @@ class ConfigSplitEntityForm extends EntityForm {
       '#default_value' => $config->get('folder'),
     ];
 
-    // @TODO: Warn if there are extensions in $config that are not available.
     $module_handler = $this->moduleHandler;
     $modules = array_map(function ($module) use ($module_handler) {
       return $module_handler->getName($module->getName());
     }, $module_handler->getModuleList());
+    // Add the existing ones with the machine name so they do not get lost.
+    $modules = $modules + array_combine(array_keys($config->get('module')), array_keys($config->get('module')));
     $form['module'] = [
       '#type' => 'select',
       '#title' => $this->t('Modules'),
@@ -157,7 +158,9 @@ class ConfigSplitEntityForm extends EntityForm {
 
     // Transform the values from the form to correctly save the entity.
     $extensions = $this->config('core.extension');
-    $form_state->setValue('module', array_intersect_key($extensions->get('module'), $form_state->getValue('module')));
+    // Add the configs modules so we can save inactive splits.
+    $module_list = $extensions->get('module') + $this->entity->get('module');
+    $form_state->setValue('module', array_intersect_key($module_list, $form_state->getValue('module')));
     $form_state->setValue('theme', array_intersect_key($extensions->get('theme'), $form_state->getValue('theme')));
     $form_state->setValue('blacklist', array_merge(
       array_keys($form_state->getValue('blacklist_select')),
