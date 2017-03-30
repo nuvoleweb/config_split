@@ -4,9 +4,12 @@ namespace Drupal\config_split\Plugin\ConfigFilter;
 
 use Drupal\config_filter\Plugin\ConfigFilterBase;
 use Drupal\Core\Config\ConfigManagerInterface;
+use Drupal\Core\Config\DatabaseStorage;
 use Drupal\Core\Config\FileStorage;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Config\StorageInterface;
+use Drupal\Core\Database\Connection;
+use Drupal\Core\Database\Database;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Component\PhpStorage\FileStorage as PhpFileStorage;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -98,7 +101,7 @@ class SplitFilter extends ConfigFilterBase implements ContainerFactoryPluginInte
       $plugin_id,
       $plugin_definition,
       $container->get('config.manager'),
-      self::getSecondaryStorage($config)
+      self::getSecondaryStorage($config, $container->get('database'))
     );
   }
 
@@ -380,11 +383,13 @@ class SplitFilter extends ConfigFilterBase implements ContainerFactoryPluginInte
    *
    * @param \Drupal\Core\Config\ImmutableConfig $config
    *   The configuration for the split.
+   * @param \Drupal\Core\Database\Connection $connection
+   *   The database connection for creating a database storage.
    *
    * @return \Drupal\Core\Config\StorageInterface
    *   The secondary storage to split to and from.
    */
-  protected static function getSecondaryStorage(ImmutableConfig $config) {
+  protected static function getSecondaryStorage(ImmutableConfig $config, Connection $connection) {
     // Here we could determine to use relative paths etc.
     if ($directory = $config->get('folder')) {
 
@@ -404,9 +409,12 @@ class SplitFilter extends ConfigFilterBase implements ContainerFactoryPluginInte
         // Allow virtual file systems even if file_exists is false.
         return new FileStorage($directory);
       }
+
+      return NULL;
     }
 
-    return NULL;
+    // When the folder is not set use a database.
+    return new DatabaseStorage($connection, $connection->escapeTable(strtr($config->getName(), ['.' => '_'])));
   }
 
 }

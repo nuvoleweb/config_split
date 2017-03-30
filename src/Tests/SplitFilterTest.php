@@ -3,10 +3,10 @@
 namespace Drupal\config_split\Tests;
 
 use Drupal\config_split\Plugin\ConfigFilter\SplitFilter;
+use Drupal\Core\Config\DatabaseStorage;
 use Drupal\Core\Config\FileStorage;
 use Drupal\Core\Config\NullStorage;
 use Drupal\Core\Config\StorageInterface;
-use Drupal\Tests\Core\Database\Stub\StubConnection;
 use Drupal\Tests\UnitTestCase;
 use org\bovigo\vfs\vfsStream;
 use org\bovigo\vfs\vfsStreamFile;
@@ -497,6 +497,34 @@ class SplitFilterTest extends UnitTestCase {
 
     $folder->addChild(new vfsStreamFile($name . '.' . FileStorage::getFileExtension()));
     $this->assertTrue($filter->filterExists($name, FALSE), 'Assert filename');
+
+    // Test split with db storage.
+    $name = 'config_split.' . $this->getRandomGenerator()->name();
+    $container = $this->prophesize('Symfony\Component\DependencyInjection\ContainerInterface');
+    $container->get('config.manager')->willReturn($this->getConfigManagerMock());
+    $container->get('config.factory')->willReturn($this->getConfigFactoryStub([
+      $name => [
+        'folder' => '',
+        'module' => [],
+        'theme' => [],
+        'blacklist' => [],
+        'graylist' => [],
+      ],
+    ]));
+    $database = $this->prophesize('Drupal\Core\Database\Connection')->reveal();
+    $container->get('database')->willReturn($database);
+
+    $configuration = [
+      'config_name' => $name,
+    ];
+
+    $filter = SplitFilter::create($container->reveal(), $configuration, $this->getRandomGenerator()->name(), []);
+    // Get the protected secondaryStorage property.
+    $storage = new \ReflectionProperty(SplitFilter::class, 'secondaryStorage');
+    $storage->setAccessible(TRUE);
+    $secondary = $storage->getValue($filter);
+
+    $this->assertInstanceOf(DatabaseStorage::class, $secondary);
   }
 
   /**
