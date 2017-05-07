@@ -105,6 +105,7 @@ class ConfigSplitCliServiceTest extends KernelTestBase {
     $primary = new FileStorage($split->url() . '/sync');
     $config = new Config('config_split.config_split.test_split', $this->container->get('config.storage'), $this->container->get('event_dispatcher'), $this->container->get('config.typed'));
     $config->initWithData([
+      'id' => 'test_split',
       'folder' => $split->url() . '/split',
       'module' => ['config_test' => 0],
       'theme' => [],
@@ -175,6 +176,7 @@ class ConfigSplitCliServiceTest extends KernelTestBase {
     $primary = new FileStorage($split->url() . '/sync');
     $config = new Config('config_split.config_split.test_split', $this->container->get('config.storage'), $this->container->get('event_dispatcher'), $this->container->get('config.typed'));
     $config->initWithData([
+      'id' => 'test_split',
       'folder' => $split->url() . '/split',
       'module' => [],
       'theme' => [],

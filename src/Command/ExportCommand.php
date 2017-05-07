@@ -48,8 +48,8 @@ class ExportCommand extends SplitCommandBase {
         $destination = \Drupal::config($config_name)->get('folder');
 
         // Set the primary to a GhostStorage so that we only export the split.
-        $plugin_id = str_replace('config_split.config_split.', 'config_split:', $config_name);
-        $storage = \Drupal::service('plugin.manager.config_filter')->getFilteredStorage(FileStorageFactory::getSync(), 'config.storage.sync', [$plugin_id]);
+        $plugin_id = \Drupal::service('config_split.cli')->getPliginIdFromConfigName($config_name);
+        $storage = \Drupal::service('config_filter.storage_factory')->getFilteredStorage(FileStorageFactory::getSync(), ['config.storage.sync'], [$plugin_id]);
         $primary = new GhostStorage($storage);
 
         $message = $this->trans('commands.config_split.export.messages.directories');

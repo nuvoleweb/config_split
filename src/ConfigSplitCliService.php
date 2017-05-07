@@ -55,11 +55,18 @@ class ConfigSplitCliService {
   protected $configManager;
 
   /**
-   * Drupal\Core\Config\CachedStorage definition.
+   * Active Config Storage.
    *
-   * @var \Drupal\Core\Config\CachedStorage
+   * @var \Drupal\Core\Config\StorageInterface
    */
-  protected $configStorage;
+  protected $activeStorage;
+
+  /**
+   * Sync Config Storage.
+   *
+   * @var \Drupal\Core\Config\StorageInterface
+   */
+  protected $syncStorage;
 
   /**
    * Drupal\Component\EventDispatcher\ContainerAwareEventDispatcher definition.
@@ -120,10 +127,23 @@ class ConfigSplitCliService {
   /**
    * Constructor.
    */
-  public function __construct(ConfigFilterManagerInterface $config_filter_manager, ConfigManagerInterface $config_manager, StorageInterface $config_storage, EventDispatcherInterface $event_dispatcher, LockBackendInterface $lock, TypedConfigManagerInterface $config_typed, ModuleHandlerInterface $module_handler, ModuleInstallerInterface $module_installer, ThemeHandlerInterface $theme_handler, TranslationInterface $string_translation) {
+  public function __construct(
+    ConfigFilterManagerInterface $config_filter_manager,
+    ConfigManagerInterface $config_manager,
+    StorageInterface $active_storage,
+    StorageInterface $sync_storage,
+    EventDispatcherInterface $event_dispatcher,
+    LockBackendInterface $lock,
+    TypedConfigManagerInterface $config_typed,
+    ModuleHandlerInterface $module_handler,
+    ModuleInstallerInterface $module_installer,
+    ThemeHandlerInterface $theme_handler,
+    TranslationInterface $string_translation
+  ) {
     $this->configFilterManager = $config_filter_manager;
     $this->configManager = $config_manager;
-    $this->configStorage = $config_storage;
+    $this->activeStorage = $active_storage;
+    $this->syncStorage = $sync_storage;
     $this->eventDispatcher = $event_dispatcher;
     $this->lock = $lock;
     $this->configTyped = $config_typed;
@@ -149,19 +169,19 @@ class ConfigSplitCliService {
     $storage->deleteAll();
 
     // Get the default active storage to copy it to the sync storage.
-    if ($this->configStorage->getCollectionName() != StorageInterface::DEFAULT_COLLECTION) {
+    if ($this->activeStorage->getCollectionName() != StorageInterface::DEFAULT_COLLECTION) {
       // This is probably not necessary, but we do it as a precaution.
-      $this->configStorage = $this->configStorage->createCollection(StorageInterface::DEFAULT_COLLECTION);
+      $this->activeStorage = $this->activeStorage->createCollection(StorageInterface::DEFAULT_COLLECTION);
     }
 
     // Copy everything.
-    foreach ($this->configStorage->listAll() as $name) {
-      $storage->write($name, $this->configStorage->read($name));
+    foreach ($this->activeStorage->listAll() as $name) {
+      $storage->write($name, $this->activeStorage->read($name));
     }
 
     // Get all override data from the remaining collections.
-    foreach ($this->configStorage->getAllCollectionNames() as $collection) {
-      $source_collection = $this->configStorage->createCollection($collection);
+    foreach ($this->activeStorage->getAllCollectionNames() as $collection) {
+      $source_collection = $this->activeStorage->createCollection($collection);
       $destination_collection = $storage->createCollection($collection);
       // Delete everything in the collection sub-directory.
       $destination_collection->deleteAll();
@@ -184,22 +204,32 @@ class ConfigSplitCliService {
    * @param \Drupal\Core\Config\StorageInterface $primary
    *   The config storage to wrap.
    *
-   * @return \Drupal\config_filter\Config\FilteredStorageInterface
+   * @return \Drupal\Core\Config\StorageInterface
    *   The storage to use.
    */
   public function getStorage($config_name = NULL, StorageInterface $primary = NULL) {
     $filters = [];
-    if ($config_name && $primary) {
-      $configuration = [
-        'config_name' => $config_name,
-      ];
-      $filters[] = SplitFilter::create(\Drupal::getContainer(), $configuration, 'config_split', []);
+    if ($config_name) {
+      $filters[] = $this->configFilterManager->getFilterInstance($this->getPliginIdFromConfigName($config_name));
     }
     if ($primary) {
       return new FilteredStorage($primary, $filters);
     }
 
-    return $this->configFilterManager->getFilteredSyncStorage();
+    return $this->syncStorage;
+  }
+
+  /**
+   * Get the plugin id of a split filter from a config name.
+   *
+   * @param string $name
+   *   The config name.
+   *
+   * @return string
+   *   The plugin id.
+   */
+  public function getPliginIdFromConfigName($name) {
+    return 'config_split:' . str_replace('config_split.config_split.', '', $name);
   }
 
   /**
@@ -215,7 +245,7 @@ class ConfigSplitCliService {
    */
   public function import($config_name = NULL, StorageInterface $primary = NULL) {
     $storage = $this->getStorage($config_name, $primary);
-    $comparer = new StorageComparer($storage, $this->configStorage, $this->configManager);
+    $comparer = new StorageComparer($storage, $this->activeStorage, $this->configManager);
 
     if (!$comparer->createChangelist()->hasChanges()) {
       return static::NO_CHANGES;
