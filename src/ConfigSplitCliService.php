@@ -184,7 +184,12 @@ class ConfigSplitCliService {
       $source_collection = $this->activeStorage->createCollection($collection);
       $destination_collection = $storage->createCollection($collection);
       // Delete everything in the collection sub-directory.
-      $destination_collection->deleteAll();
+      try {
+        $destination_collection->deleteAll();
+      }
+      catch (\UnexpectedValueException $exception) {
+        // Deleting a non-existing folder for collections might fail.
+      }
 
       foreach ($source_collection->listAll() as $name) {
         $destination_collection->write($name, $source_collection->read($name));
