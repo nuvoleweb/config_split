@@ -225,7 +225,7 @@ class ConfigSplitEntityForm extends EntityForm {
           '%label' => $config_split->label(),
         ]));
     }
-    $form_state->setRedirectUrl($config_split->urlInfo('collection'));
+    $form_state->setRedirectUrl($config_split->toUrl('collection'));
   }
 
 }
