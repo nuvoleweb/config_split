@@ -3,6 +3,7 @@
 namespace Drupal\config_split\Entity;
 
 use Drupal\Core\Config\Entity\ConfigEntityBase;
+use Drupal\Core\Entity\EntityTypeInterface;
 
 /**
  * Defines the Configuration Split Setting entity.
@@ -127,5 +128,23 @@ class ConfigSplitEntity extends ConfigEntityBase implements ConfigSplitEntityInt
    * @var bool
    */
   protected $status = TRUE;
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function invalidateTagsOnSave($update) {
+    parent::invalidateTagsOnSave($update);
+    // Clear the config_filter plugin cache.
+    \Drupal::service('plugin.manager.config_filter')->clearCachedDefinitions();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected static function invalidateTagsOnDelete(EntityTypeInterface $entity_type, array $entities) {
+    parent::invalidateTagsOnDelete($entity_type, $entities);
+    // Clear the config_filter plugin cache.
+    \Drupal::service('plugin.manager.config_filter')->clearCachedDefinitions();
+  }
 
 }
