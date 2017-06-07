@@ -9,7 +9,7 @@ use Drupal\Core\Config\FileStorage;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Config\StorageInterface;
 use Drupal\Core\Database\Connection;
-use Drupal\Core\Database\Database;
+use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Component\PhpStorage\FileStorage as PhpFileStorage;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -25,6 +25,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * )
  */
 class SplitFilter extends ConfigFilterBase implements ContainerFactoryPluginInterface {
+
+  use DependencySerializationTrait;
 
   /**
    * The Configuration manager to calculate the dependencies.
