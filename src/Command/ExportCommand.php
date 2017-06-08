@@ -6,8 +6,8 @@ use Drupal\config_split\Config\GhostStorage;
 use Drupal\Core\Config\FileStorageFactory;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Drupal\Console\Core\Command\Shared\ContainerAwareCommandTrait;
-use Drupal\Console\Core\Style\DrupalStyle;
+use Drupal\Console\Command\Shared\ContainerAwareCommandTrait;
+use Drupal\Console\Style\DrupalStyle;
 
 /**
  * Class ExportCommand.
