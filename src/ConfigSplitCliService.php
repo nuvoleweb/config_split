@@ -4,10 +4,14 @@ namespace Drupal\config_split;
 
 use Drupal\config_filter\Config\FilteredStorage;
 use Drupal\config_filter\ConfigFilterManagerInterface;
+use Drupal\config_filter\ConfigFilterStorageFactory;
+use Drupal\config_split\Config\GhostStorage;
+use Drupal\config_split\Entity\ConfigSplitEntity;
 use Drupal\config_split\Plugin\ConfigFilter\SplitFilter;
 use Drupal\Core\Config\ConfigImporter;
 use Drupal\Core\Config\ConfigImporterException;
 use Drupal\Core\Config\ConfigManagerInterface;
+use Drupal\Core\Config\FileStorageFactory;
 use Drupal\Core\Config\StorageComparer;
 use Drupal\Core\Config\StorageInterface;
 use Drupal\Core\Config\TypedConfigManagerInterface;
@@ -22,6 +26,8 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
  * Class ConfigSplitCliService.
  *
  * @package Drupal\config_split
+ *
+ * @internal This service is not an api and may change at any time.
  */
 class ConfigSplitCliService {
 
@@ -46,6 +52,13 @@ class ConfigSplitCliService {
    * @var \Drupal\config_filter\ConfigFilterManagerInterface
    */
   protected $configFilterManager;
+
+  /**
+   * The config filter storage factory.
+   *
+   * @var \Drupal\config_filter\ConfigFilterStorageFactory
+   */
+  protected $storageFactory;
 
   /**
    * Drupal\Core\Config\ConfigManager definition.
@@ -129,6 +142,7 @@ class ConfigSplitCliService {
    */
   public function __construct(
     ConfigFilterManagerInterface $config_filter_manager,
+    ConfigFilterStorageFactory $storageFactory,
     ConfigManagerInterface $config_manager,
     StorageInterface $active_storage,
     StorageInterface $sync_storage,
@@ -141,6 +155,7 @@ class ConfigSplitCliService {
     TranslationInterface $string_translation
   ) {
     $this->configFilterManager = $config_filter_manager;
+    $this->storageFactory = $storageFactory;
     $this->configManager = $config_manager;
     $this->activeStorage = $active_storage;
     $this->syncStorage = $sync_storage;
@@ -155,15 +170,108 @@ class ConfigSplitCliService {
   }
 
   /**
+   * Handle the export interaction.
+   *
+   * @param string|null $split
+   *   The split name to export, null for standard export.
+   * @param \Symfony\Component\Console\Style\StyleInterface|\ConfigSplitDrush8Io $io
+   *   The io interface of the cli tool calling the method.
+   * @param callable $t
+   *   The translation function akin to t().
+   */
+  public function ioExport($split, $io, callable $t) {
+    if (!$split) {
+      $message = $t('Do a normal (including filters) config export?');
+      $storage = $this->syncStorage;
+    }
+    else {
+      $config_name = $this->getSplitName($split);
+
+      $plugin_id = $this->getPliginIdFromConfigName($config_name);
+      $filter = $this->configFilterManager->getFilterInstance($plugin_id);
+
+      // Use a GhostStorage so that we only export the split.
+      $storage = $this->storageFactory->getFilteredStorage(FileStorageFactory::getSync(), ['config.storage.sync'], [$plugin_id]);
+      $storage = new FilteredStorage(new GhostStorage($storage), [$filter]);
+
+      $message = $t('The following directories will be purged and used for exporting configuration:');
+      $message .= "\n";
+      $message .= $this->getDestination($config_name);
+      $message .= "\n";
+      $message .= $t('Export the configuration?');
+    }
+
+    if ($io->confirm($message)) {
+      $this->export($storage);
+      $io->success($t("Configuration successfully exported."));
+    }
+  }
+
+  /**
+   * Handle the import interaction.
+   *
+   * @param string|null $split
+   *   The split name to import, null for standard import.
+   * @param \Symfony\Component\Console\Style\StyleInterface|\ConfigSplitDrush8Io $io
+   *   The $io interface of the cli tool calling.
+   * @param callable $t
+   *   The translation function akin to t().
+   */
+  public function ioImport($split, $io, callable $t) {
+    if (!$split) {
+      $message = $t('Do a normal (including filters) config import?');
+      $storage = $this->syncStorage;
+    }
+    else {
+      $config_name = $this->getSplitName($split);
+      $filter = $this->configFilterManager->getFilterInstance($this->getPliginIdFromConfigName($config_name));
+
+      // Filter the active storage so we only import the split.
+      $storage = new FilteredStorage($this->activeStorage, [$filter]);
+
+      $message = $t('The following directory will be used to merge config into the active storage:');
+      $message .= "\n";
+      $message .= $this->getDestination($config_name);
+      $message .= "\n";
+      $message .= $t('Import the configuration?');
+    }
+
+    try {
+      if ($io->confirm($message)) {
+        $status = $this->import($storage);
+        switch ($status) {
+          case ConfigSplitCliService::COMPLETE:
+            $io->success($t("Configuration successfully imported."));
+            break;
+
+          case ConfigSplitCliService::NO_CHANGES:
+            $io->text($t("There are no changes to import."));
+            break;
+
+          case ConfigSplitCliService::ALREADY_IMPORTING:
+            $io->error($t("Another request may be synchronizing configuration already."));
+            break;
+
+          default:
+            $io->error($t("Something unexpected happened"));
+            break;
+        }
+      }
+    }
+    catch (ConfigImporterException $e) {
+      $io->error($t('There have been errors importing: @errors', ['@errors' => implode("\n", $this->getErrors())]));
+    }
+  }
+
+  /**
    * Export the configuration.
    *
-   * @param string $config_name
-   *   The configuration name for the SplitFilter.
-   * @param \Drupal\Core\Config\StorageInterface $primary
-   *   The primary storage, typically what is defined by CONFIG_SYNC_DIRECTORY.
+   * This is the quintessential config export.
+   *
+   * @param \Drupal\Core\Config\StorageInterface $storage
+   *   The config storage to export to.
    */
-  public function export($config_name = NULL, StorageInterface $primary = NULL) {
-    $storage = $this->getStorage($config_name, $primary);
+  public function export(StorageInterface $storage) {
 
     // Delete all, the filters are responsible for keeping some configuration.
     $storage->deleteAll();
@@ -200,56 +308,18 @@ class ConfigSplitCliService {
   }
 
   /**
-   * Get the storage to work with.
-   *
-   * If either the name or the primary storage are empty, the default is used.
-   *
-   * @param string $config_name
-   *   The name of the configuration for the split to use.
-   * @param \Drupal\Core\Config\StorageInterface $primary
-   *   The config storage to wrap.
-   *
-   * @return \Drupal\Core\Config\StorageInterface
-   *   The storage to use.
-   */
-  public function getStorage($config_name = NULL, StorageInterface $primary = NULL) {
-    $filters = [];
-    if ($config_name) {
-      $filters[] = $this->configFilterManager->getFilterInstance($this->getPliginIdFromConfigName($config_name));
-    }
-    if ($primary) {
-      return new FilteredStorage($primary, $filters);
-    }
-
-    return $this->syncStorage;
-  }
-
-  /**
-   * Get the plugin id of a split filter from a config name.
-   *
-   * @param string $name
-   *   The config name.
-   *
-   * @return string
-   *   The plugin id.
-   */
-  public function getPliginIdFromConfigName($name) {
-    return 'config_split:' . str_replace('config_split.config_split.', '', $name);
-  }
-
-  /**
    * Import the configuration.
    *
-   * @param string $config_name
-   *   The configuration name for the SplitFilter.
-   * @param \Drupal\Core\Config\StorageInterface $primary
-   *   The primary storage, typically what is defined by CONFIG_SYNC_DIRECTORY.
+   * This is the quintessential config import.
+   *
+   * @param \Drupal\Core\Config\StorageInterface $storage
+   *   The config storage to import from.
    *
    * @return string
    *   The state of importing.
    */
-  public function import($config_name = NULL, StorageInterface $primary = NULL) {
-    $storage = $this->getStorage($config_name, $primary);
+  public function import(StorageInterface $storage) {
+
     $comparer = new StorageComparer($storage, $this->activeStorage, $this->configManager);
 
     if (!$comparer->createChangelist()->hasChanges()) {
@@ -293,6 +363,58 @@ class ConfigSplitCliService {
    */
   public function getErrors() {
     return $this->errors;
+  }
+
+  /**
+   * Get the plugin id of a split filter from a config name.
+   *
+   * @param string $name
+   *   The config name.
+   *
+   * @return string
+   *   The plugin id.
+   */
+  protected function getPliginIdFromConfigName($name) {
+    return 'config_split:' . str_replace('config_split.config_split.', '', $name);
+  }
+
+  /**
+   * Get the configuration name from the short name.
+   *
+   * @param string $name
+   *   The name to get the config name for.
+   *
+   * @return string
+   *   The split configuration name.
+   */
+  protected function getSplitName($name) {
+
+    if (strpos($name, 'config_split.config_split.') !== 0) {
+      $name = 'config_split.config_split.' . $name;
+    }
+
+    if (!in_array($name, $this->activeStorage->listAll('config_split.config_split.'))) {
+      throw new \InvalidArgumentException('The following split is not available: ' . $name);
+    }
+
+    return $name;
+  }
+
+  /**
+   * Returns the directory path to export or "database".
+   *
+   * @param string $config_name
+   *   The configuration name.
+   *
+   * @return string
+   *   The destination.
+   */
+  protected function getDestination($config_name) {
+    $destination = $this->configManager->getConfigFactory()->get($config_name)->get('folder');
+    if ($destination == '') {
+      $destination = 'dedicated database table.';
+    }
+    return $destination;
   }
 
 }
