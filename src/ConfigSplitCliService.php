@@ -259,7 +259,7 @@ class ConfigSplitCliService {
       }
     }
     catch (ConfigImporterException $e) {
-      $io->error($t('There have been errors importing: @errors', ['@errors' => implode("\n", $this->getErrors())]));
+      $io->error($t('There have been errors importing: @errors', ['@errors' => strip_tags(implode("\n", $this->getErrors()))]));
     }
   }
 
