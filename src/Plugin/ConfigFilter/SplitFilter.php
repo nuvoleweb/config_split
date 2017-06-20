@@ -143,14 +143,18 @@ class SplitFilter extends ConfigFilterBase implements ContainerFactoryPluginInte
     $data['module'] = array_merge($data['module'], $modules);
     $data['theme'] = array_merge($data['theme'], $themes);
     // Sort the modules.
-    uksort($data['module'], function ($a, $b) use ($data) {
+    $sort_modules = $data['module'];
+    uksort($sort_modules, function ($a, $b) use ($sort_modules) {
       // Sort by module weight, this assumes the schema of core.extensions.
-      if ($data['module'][$a] != $data['module'][$b]) {
-        return $data['module'][$a] > $data['module'][$b] ? 1 : -1;
+      if ($sort_modules[$a] != $sort_modules[$b]) {
+        return $sort_modules[$a] > $sort_modules[$b] ? 1 : -1;
       }
       // Or sort by module name.
       return $a > $b ? 1 : -1;
     });
+
+    $data['module'] = $sort_modules;
+
     return $data;
   }
 
