@@ -270,26 +270,38 @@ class ConfigSplitCliService {
    *
    * @param \Drupal\Core\Config\StorageInterface $storage
    *   The config storage to export to.
+   * @param \Drupal\Core\Config\StorageInterface|null $active
+   *   The config storage to export from (optional).
    */
-  public function export(StorageInterface $storage) {
+  public function export(StorageInterface $storage, StorageInterface $active = NULL) {
+    if (!isset($active)) {
+      // Use the active storage.
+      $active = $this->activeStorage;
+    }
+
+    // Make the storage to be the default collection.
+    if ($storage->getCollectionName() != StorageInterface::DEFAULT_COLLECTION) {
+      // This is probably not necessary, but we do it as a precaution.
+      $storage = $storage->createCollection(StorageInterface::DEFAULT_COLLECTION);
+    }
 
     // Delete all, the filters are responsible for keeping some configuration.
     $storage->deleteAll();
 
     // Get the default active storage to copy it to the sync storage.
-    if ($this->activeStorage->getCollectionName() != StorageInterface::DEFAULT_COLLECTION) {
+    if ($active->getCollectionName() != StorageInterface::DEFAULT_COLLECTION) {
       // This is probably not necessary, but we do it as a precaution.
-      $this->activeStorage = $this->activeStorage->createCollection(StorageInterface::DEFAULT_COLLECTION);
+      $active = $active->createCollection(StorageInterface::DEFAULT_COLLECTION);
     }
 
     // Copy everything.
-    foreach ($this->activeStorage->listAll() as $name) {
-      $storage->write($name, $this->activeStorage->read($name));
+    foreach ($active->listAll() as $name) {
+      $storage->write($name, $active->read($name));
     }
 
     // Get all override data from the remaining collections.
-    foreach ($this->activeStorage->getAllCollectionNames() as $collection) {
-      $source_collection = $this->activeStorage->createCollection($collection);
+    foreach ($active->getAllCollectionNames() as $collection) {
+      $source_collection = $active->createCollection($collection);
       $destination_collection = $storage->createCollection($collection);
       // Delete everything in the collection sub-directory.
       try {
