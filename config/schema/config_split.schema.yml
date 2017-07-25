@@ -10,6 +10,12 @@ config_split.config_split.*:
       label: 'Label'
     uuid:
       type: string
+    weight:
+      type: integer
+      label: 'Weight'
+    status:
+      type: boolean
+      label: 'Active'
     folder:
       type: string
       label: 'Folder'
@@ -41,9 +47,3 @@ config_split.config_split.*:
     graylist_skip_equal:
       type: boolean
       label: 'Skip graylisted config without a change.'
-    weight:
-      type: integer
-      label: 'Weight'
-    status:
-      type: boolean
-      label: 'Active'

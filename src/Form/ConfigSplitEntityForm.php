@@ -169,6 +169,20 @@ class ConfigSplitEntityForm extends EntityForm {
   /**
    * {@inheritdoc}
    */
+  public function validateForm(array &$form, FormStateInterface $form_state)
+  {
+    global $config_directories;
+
+    parent::validateForm($form, $form_state);
+    $folder = $form_state->getValue('folder');
+    if (strpos($folder, $config_directories[CONFIG_SYNC_DIRECTORY]) !== FALSE) {
+      $form_state->setErrorByName('folder', $this->t('The split folder can not be in the sync folder.'));
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function submitForm(array &$form, FormStateInterface $form_state) {
 
     // Transform the values from the form to correctly save the entity.
