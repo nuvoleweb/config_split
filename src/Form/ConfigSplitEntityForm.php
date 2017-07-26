@@ -169,8 +169,7 @@ class ConfigSplitEntityForm extends EntityForm {
   /**
    * {@inheritdoc}
    */
-  public function validateForm(array &$form, FormStateInterface $form_state)
-  {
+  public function validateForm(array &$form, FormStateInterface $form_state) {
     global $config_directories;
 
     parent::validateForm($form, $form_state);
