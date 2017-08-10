@@ -101,6 +101,20 @@ exporting the configuration.') . '</dd>';
       $output .= '</dl>';
 
       return $output;
+
+    case 'entity.config_split.add_form':
+    case 'entity.config_split.edit_form':
+      $output = '';
+      $output .= '<p>' . t('Config Split Help') . '</p>';
+      $output .= '<p>' . t('The configuration listed as part of a split
+      are exported to the split directory rather than the usual sync directory
+      when exporting the whole configuration. When importing the whole 
+      configuration, the configuration in the split directories is merged with
+      the default sync directory and overrides the configuration.
+      The configuration does not end up being overwirtten in the sense of
+      configuration overrides such as the overrides from settings.php.') . '</p>';
+
+      return $output;
   }
 
   return NULL;

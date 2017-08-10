@@ -70,8 +70,18 @@ class ConfigSplitEntityForm extends EntityForm {
 
     $form['blacklist_fieldset'] = [
       '#type' => 'fieldset',
-      '#title' => $this->t('Blacklist'),
-      '#description' => $this->t("Configuration listed here will be removed from the sync directory and saved in the split directory instead.<br/>Use this part for configuration that should be completely excluded from the normal sync directory."),
+      '#title' => $this->t('Blacklist (Forked Configuration / Hard Overrides)'),
+      '#description' => $this->t("Configuration listed here will be
+       removed from the sync directory and saved in the split directory instead.
+       <br/>Use this part for configuration that should be completely excluded
+       from the normal sync directory.<br />
+       The configuration listed here is maintained exclusively in the split 
+       (Hard override.) For example modules listed here are removed from
+       core.extension but will be enabled when importing the configuration with
+       the split active, all the configuration that depends on these modules can
+       not be part of the normal configuration to sync without the split.
+       Therefore this configuration is saved in the split folder (forked) and 
+       merged when needed."),
     ];
 
     $module_handler = $this->moduleHandler;
@@ -127,10 +137,14 @@ class ConfigSplitEntityForm extends EntityForm {
 
     $form['graylist_fieldset'] = [
       '#type' => 'fieldset',
-      '#title' => $this->t('Graylist*'),
-      '#description' => $this->t("Configuration listed here will not be removed from the sync directory, instead a copy with the currently active settings will be stored in the split directory.<br>If the configuration does not exist in the sync storage the behavior is the same as the blacklist.<br/>Use this part for configuration that is different on your site but which should remain part of the main sync directory."),
+      '#title' => $this->t('Graylist (Branched Configuration / Soft Overrides)'),
+      '#description' => $this->t("Configuration listed here will not be 
+       removed from the sync directory, instead a copy with the currently active
+       settings will be stored in the split directory.<br>If the configuration
+       does not exist in the sync storage the behavior is the same as the
+       blacklist.<br/>Use this part for configuration that is different on your
+       site but which should remain part of the main sync directory.<br/>"),
     ];
-    $form['graylist_fieldset']['#description'] .= $this->t('<br/>* Suggest a better name for "graylist" in the <a href="https://www.drupal.org/node/2865280">issue on drupal.org.</a>');
 
     $form['graylist_fieldset']['graylist_select'] = [
       '#type' => 'select',
