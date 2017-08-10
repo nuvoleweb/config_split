@@ -43,6 +43,25 @@ clear the cache, and import again to have devel enabled on that environment.
 You should only edit active splits as inactive splits will not take effect when
 exporting the configuration.
 
+NOTE: Do **NOT** put configuration directories inside of each other.
+In particular the split folder **MUST NOT** be inside of the sync directory.
+Recommended is a sibling, or in other words a folder that shares the same
+parent as the sync directory or in a folder with other split folders which
+is next to the sync folder.
+
+Examples:
+```
+../config/
+├── dev
+├── sync
+└── test
+
+../config/
+├── sync
+└── splits
+    ├── dev
+    └── live
+```
 
 ## How it works
 
