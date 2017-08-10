@@ -3,6 +3,7 @@
 namespace Drupal\Tests\config_split\Kernel;
 
 use Drupal\config_filter\Config\FilteredStorage;
+use Drupal\config_split\Form\ConfigSplitEntityForm;
 use Drupal\config_split\Plugin\ConfigFilter\SplitFilter;
 use Drupal\Core\Config\Config;
 use Drupal\Core\Config\FileStorage;
@@ -12,7 +13,7 @@ use org\bovigo\vfs\vfsStream;
 /**
  * Class ConfigSplitKernelTest.
  *
- * @group config_split
+ * @group config_split_
  */
 class ConfigSplitKernelTest extends KernelTestBase {
 
@@ -88,6 +89,46 @@ class ConfigSplitKernelTest extends KernelTestBase {
     $this->assertEquals($test_system, $filtered->read('config_test.system'));
     $this->assertEquals($test_types, $filtered->read('config_test.types'));
     $this->assertEquals($test_validation, $filtered->read('config_test.validation'));
+  }
+
+  /**
+   * Test that the form checks the sync folder.
+   *
+   * @param string $split
+   *   The split folder.
+   * @param string $sync
+   *   The sync folder.
+   * @param bool $expected
+   *   The expected result.
+   *
+   * @dataProvider syncFolderIsConflictingProvider
+   */
+  public function testSyncFolderIsConflicting($split, $sync, $expected) {
+    global $config_directories;
+    $config_directories[CONFIG_SYNC_DIRECTORY] = $sync;
+
+    // Access the protected static function to test it.
+    $reflection = new \ReflectionClass(ConfigSplitEntityForm::class);
+    $method = $reflection->getMethod('isConflicting');
+    $method->setAccessible(TRUE);
+
+    $this->assertEquals($expected, $method->invoke(NULL, $split));
+  }
+
+  /**
+   * Provide the split and sync directories to compare.
+   *
+   * @return array
+   *   The data.
+   */
+  public function syncFolderIsConflictingProvider() {
+    return [
+      ['../config/split', '../config/sync', FALSE],
+      ['../config/config_split', '../config/config', FALSE],
+      ['../config/sync/split', '../config/sync', TRUE],
+      // We do not actually resolve the folder hierarchy.
+      ['config/other/../sync', 'config/sync', FALSE],
+    ];
   }
 
 }

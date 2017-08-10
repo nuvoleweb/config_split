@@ -170,11 +170,9 @@ class ConfigSplitEntityForm extends EntityForm {
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
-    global $config_directories;
-
     parent::validateForm($form, $form_state);
     $folder = $form_state->getValue('folder');
-    if (strpos($folder, $config_directories[CONFIG_SYNC_DIRECTORY]) !== FALSE) {
+    if (static::isConflicting($folder)) {
       $form_state->setErrorByName('folder', $this->t('The split folder can not be in the sync folder.'));
     }
   }
@@ -239,6 +237,21 @@ class ConfigSplitEntityForm extends EntityForm {
         ]));
     }
     $form_state->setRedirectUrl($config_split->toUrl('collection'));
+  }
+
+  /**
+   * Check whether the folder name conflicts with the default sync directory.
+   *
+   * @param string $folder
+   *   The split folder name to check.
+   *
+   * @return bool
+   *   True if the folder is inside the sync directory.
+   */
+  protected static function isConflicting($folder) {
+    global $config_directories;
+
+    return strpos(rtrim($folder, '/') . '/', rtrim($config_directories[CONFIG_SYNC_DIRECTORY], '/') . '/') !== FALSE;
   }
 
 }
