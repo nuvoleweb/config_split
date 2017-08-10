@@ -411,7 +411,7 @@ class ConfigSplitCliService {
         $names .= $name . ', ';
       }
 
-      throw new \InvalidArgumentException('The following split is not available: ' . $name . PHP_EOL . 'Available names: '  .$names);
+      throw new \InvalidArgumentException('The following split is not available: ' . $name . PHP_EOL . 'Available names: ' . $names);
     }
 
     return $name;
