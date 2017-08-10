@@ -13,7 +13,7 @@ use org\bovigo\vfs\vfsStream;
 /**
  * Class ConfigSplitKernelTest.
  *
- * @group config_split_
+ * @group config_split
  */
 class ConfigSplitKernelTest extends KernelTestBase {
 

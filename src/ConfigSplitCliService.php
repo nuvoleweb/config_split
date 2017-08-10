@@ -406,7 +406,12 @@ class ConfigSplitCliService {
     }
 
     if (!in_array($name, $this->activeStorage->listAll('config_split.config_split.'))) {
-      throw new \InvalidArgumentException('The following split is not available: ' . $name);
+      $names = '';
+      foreach ($this->activeStorage->listAll('config_split.config_split.') as $name) {
+        $names .= $name . ', ';
+      }
+
+      throw new \InvalidArgumentException('The following split is not available: ' . $name . PHP_EOL . 'Available names: '  .$names);
     }
 
     return $name;
