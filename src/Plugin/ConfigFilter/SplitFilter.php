@@ -21,7 +21,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *   id = "config_split",
  *   label = @Translation("Config Split"),
  *   storages = {"config.storage.sync"},
- *   deriver = "\Drupal\config_split\Plugin\Derivative\SplitFilter"
+ *   deriver = "\Drupal\config_split\Plugin\ConfigFilter\SplitFilterDeriver"
  * )
  */
 class SplitFilter extends ConfigFilterBase implements ContainerFactoryPluginInterface {

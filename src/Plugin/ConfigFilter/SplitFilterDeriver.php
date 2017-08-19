@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\config_split\Plugin\Derivative;
+namespace Drupal\config_split\Plugin\ConfigFilter;
 
 use Drupal\Component\Plugin\Derivative\DeriverBase;
 use Drupal\Core\Config\ConfigFactoryInterface;
@@ -13,7 +13,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *
  * @see \Drupal\config_split\Plugin\ConfigFilter\SplitFilter
  */
-class SplitFilter extends DeriverBase implements ContainerDeriverInterface {
+class SplitFilterDeriver extends DeriverBase implements ContainerDeriverInterface {
 
   /**
    * The menu storage.
