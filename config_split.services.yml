@@ -14,5 +14,3 @@ services:
       - "@module_installer"
       - "@theme_handler"
       - "@string_translation"
-  config_split.manager:
-    class: Drupal\config_split\ConfigSplitManager
