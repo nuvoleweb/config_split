@@ -101,6 +101,7 @@ class ConfigSplitEntityForm extends EntityForm {
     ];
 
     // We should probably find a better way for this.
+    // @codingStandardsIgnoreStart
     $theme_handler = \Drupal::service('theme_handler');
     $themes = array_map(function ($theme) use ($theme_handler) {
       return $theme_handler->getName($theme->getName());
@@ -116,6 +117,7 @@ class ConfigSplitEntityForm extends EntityForm {
     ];
     // At this stage we do not support themes. @TODO: support themes.
     $form['blacklist_fieldset']['theme']['#access'] = FALSE;
+    // @codingStandardsIgnoreEnd
 
     $options = array_combine($this->configFactory()->listAll(), $this->configFactory()->listAll());
     $form['blacklist_fieldset']['blacklist_select'] = [

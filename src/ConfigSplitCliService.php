@@ -6,8 +6,6 @@ use Drupal\config_filter\Config\FilteredStorage;
 use Drupal\config_filter\ConfigFilterManagerInterface;
 use Drupal\config_filter\ConfigFilterStorageFactory;
 use Drupal\config_split\Config\GhostStorage;
-use Drupal\config_split\Entity\ConfigSplitEntity;
-use Drupal\config_split\Plugin\ConfigFilter\SplitFilter;
 use Drupal\Core\Config\ConfigImporter;
 use Drupal\Core\Config\ConfigImporterException;
 use Drupal\Core\Config\ConfigManagerInterface;

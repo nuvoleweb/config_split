@@ -116,7 +116,7 @@ class ConfigSplitCliServiceTest extends KernelTestBase {
 
     // Export the configuration the way Drupal core does.
     $vanilla = vfsStream::setup('vanilla');
-    $vanilla_root = vfsStreamWrapper::getRoot();
+    vfsStreamWrapper::getRoot();
     $vanilla_primary = new FileStorage($vanilla->url());
     $this->container->get('config_split.cli')->export($vanilla_primary);
 
