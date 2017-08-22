@@ -5,6 +5,9 @@ namespace Drupal\config_split\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+// @codingStandardsIgnoreStart
+use Drupal\Console\Annotations\DrupalCommand;
+// @codingStandardsIgnoreEND
 
 /**
  * Class ImportCommand.
