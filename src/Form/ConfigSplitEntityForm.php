@@ -70,19 +70,12 @@ class ConfigSplitEntityForm extends EntityForm {
 
     $form['blacklist_fieldset'] = [
       '#type' => 'fieldset',
-      '#title' => $this->t('Complete Split (Blacklist / Forked Configuration / Hard Overrides)'),
-      '#description' => $this->t("Configuration listed here will be
-       removed from the sync directory and saved in the split directory instead.
-       (The configuration is blacklisted from the sync directory.)
-       <br/>Use this part for configuration that should be completely excluded
-       from the normal sync directory.<br />
-       The configuration listed here is maintained exclusively in the split 
-       (Hard override.) For example modules listed here are removed from
-       core.extension but will be enabled when importing the configuration with
-       the split active, all the configuration that depends on these modules can
-       not be part of the normal configuration to sync without the split.
-       Therefore this configuration is saved in the split folder (forked) and 
-       merged when needed."),
+      '#title' => $this->t('Complete Split'),
+      '#description' => $this->t("<em>Complete Split/Blacklist:</em> 
+       Configuration listed here will be removed from the sync directory and
+       saved in the split directory instead. Modules will be removed from 
+       core.extension when exporting (and added back when importing with the
+       split enabled.)"),
     ];
 
     $module_handler = $this->moduleHandler;
@@ -94,7 +87,7 @@ class ConfigSplitEntityForm extends EntityForm {
     $form['blacklist_fieldset']['module'] = [
       '#type' => 'select',
       '#title' => $this->t('Modules'),
-      '#description' => $this->t('Select modules to split. Configuration depending on the modules is automatically completely split off too.'),
+      '#description' => $this->t('Select modules to split. Configuration depending on the modules is automatically split off completely as well.'),
       '#options' => $modules,
       '#size' => 5,
       '#multiple' => TRUE,
@@ -110,7 +103,7 @@ class ConfigSplitEntityForm extends EntityForm {
     $form['blacklist_fieldset']['theme'] = [
       '#type' => 'select',
       '#title' => $this->t('Themes'),
-      '#description' => $this->t('Select themes to filter.'),
+      '#description' => $this->t('Select themes to split.'),
       '#options' => $themes,
       '#size' => 5,
       '#multiple' => TRUE,
@@ -123,8 +116,8 @@ class ConfigSplitEntityForm extends EntityForm {
     $options = array_combine($this->configFactory()->listAll(), $this->configFactory()->listAll());
     $form['blacklist_fieldset']['blacklist_select'] = [
       '#type' => 'select',
-      '#title' => $this->t('Complete Split (Blacklist)'),
-      '#description' => $this->t('Select configuration to filter out.'),
+      '#title' => $this->t('Configuration items'),
+      '#description' => $this->t('Select configuration to split. Configuration depending on split modules does not need to be selected here specifically.'),
       '#options' => $options,
       '#size' => 5,
       '#multiple' => TRUE,
@@ -132,28 +125,27 @@ class ConfigSplitEntityForm extends EntityForm {
     ];
     $form['blacklist_fieldset']['blacklist_text'] = [
       '#type' => 'textarea',
-      '#title' => $this->t('Complete Split (Blacklist)'),
-      '#description' => $this->t('Select additional configuration to filter out. One configuration key per line.'),
+      '#title' => $this->t('Additional configuration'),
+      '#description' => $this->t('Select additional configuration to split. One configuration key per line. You can use wildcards.'),
       '#size' => 5,
       '#default_value' => implode("\n", array_diff($config->get('blacklist'), array_keys($options))),
     ];
 
     $form['graylist_fieldset'] = [
       '#type' => 'fieldset',
-      '#title' => $this->t('Conditional Split (Graylist / Branched Configuration / Soft Overrides)'),
-      '#description' => $this->t("Configuration listed here will not be 
-       removed from the sync directory if it exists there, instead a copy with
-       the currently active settings will be stored in the split directory.<br>
-       If the configuration does not exist in the sync storage the behavior is
-       the same as the complete split (blacklist.)<br/>
-       Use this part for configuration that is different on your site but which 
-       should remain part of the main sync directory.<br/>"),
+      '#title' => $this->t('Conditional Split'),
+      '#description' => $this->t("<em>Conditional Split/Graylist:</em> 
+       Configuration listed here will be left untouched in the main sync 
+       directory. The <em>currently active</em> version will be exported to the
+       split directory.<br />
+       Use this for configuration that is different on your site but which
+       should also remain in the main sync directory."),
     ];
 
     $form['graylist_fieldset']['graylist_select'] = [
       '#type' => 'select',
-      '#title' => $this->t('Conditional Split (Graylist)'),
-      '#description' => $this->t('Select configuration to ignore.'),
+      '#title' => $this->t('Configuration items'),
+      '#description' => $this->t('Select configuration to split conditionally.'),
       '#options' => $options,
       '#size' => 5,
       '#multiple' => TRUE,
@@ -161,23 +153,23 @@ class ConfigSplitEntityForm extends EntityForm {
     ];
     $form['graylist_fieldset']['graylist_text'] = [
       '#type' => 'textarea',
-      '#title' => $this->t('Conditional Split (Graylist)'),
-      '#description' => $this->t('Select additional configuration to ignore. One configuration key per line.'),
+      '#title' => $this->t('Additional configuration'),
+      '#description' => $this->t('Select additional configuration to conditionally split. One configuration key per line. You can use wildcards.'),
       '#size' => 5,
       '#default_value' => implode("\n", array_diff($config->get('graylist'), array_keys($options))),
     ];
 
     $form['graylist_fieldset']['graylist_dependents'] = [
       '#type' => 'checkbox',
-      '#title' => $this->t('Include dependent configuration for graylist'),
-      '#description' => $this->t('If this is set, conditionally split (graylisted) configuration will also include configuration that depend on it.'),
+      '#title' => $this->t('Include dependent configuration'),
+      '#description' => $this->t('If this is set, conditionally split configuration will also include configuration that depends on it.'),
       '#default_value' => ($config->get('graylist_dependents') ? TRUE : FALSE),
     ];
 
     $form['graylist_fieldset']['graylist_skip_equal'] = [
       '#type' => 'checkbox',
-      '#title' => $this->t('Split graylist only when different'),
-      '#description' => $this->t('If this is set, conditionally split (graylisted) configuration will not be in the split directory if it is equal to the one in the main sync directory.'),
+      '#title' => $this->t('Split only when different'),
+      '#description' => $this->t('If this is set, conditionally split configuration will not be exported to the split directory if it is equal to the one in the main sync directory.'),
       '#default_value' => ($config->get('graylist_skip_equal') ? TRUE : FALSE),
     ];
 
