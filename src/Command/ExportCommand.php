@@ -27,6 +27,7 @@ class ExportCommand extends SplitCommandBase {
   protected function configure() {
     $this
       ->setName('config_split:export')
+      ->setAliases(['csex'])
       ->setDescription($this->trans('commands.config_split.export.description'))
       ->addOption('split', NULL, InputOption::VALUE_OPTIONAL);
   }

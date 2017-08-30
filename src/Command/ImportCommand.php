@@ -27,6 +27,7 @@ class ImportCommand extends SplitCommandBase {
   protected function configure() {
     $this
       ->setName('config_split:import')
+      ->setAliases(['csim'])
       ->setDescription($this->trans('commands.config_split.import.description'))
       ->addOption('split', NULL, InputOption::VALUE_OPTIONAL);
   }
