@@ -167,7 +167,9 @@ class SplitFilter extends ConfigFilterBase implements ContainerFactoryPluginInte
     }
 
     if (in_array($name, $this->blacklist)) {
-      $this->secondaryStorage->write($name, $data);
+      if ($data) {
+        $this->secondaryStorage->write($name, $data);
+      }
 
       return NULL;
     }
@@ -176,7 +178,9 @@ class SplitFilter extends ConfigFilterBase implements ContainerFactoryPluginInte
         // The configuration is in the graylist but skip-equal is not set or
         // the source does not have the same data, so write to secondary and
         // return source data or null if it doesn't exist in the source.
-        $this->secondaryStorage->write($name, $data);
+        if ($data) {
+          $this->secondaryStorage->write($name, $data);
+        }
 
         // If the source has it, return that so it doesn't get changed.
         if ($this->source) {
