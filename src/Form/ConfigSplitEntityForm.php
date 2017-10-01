@@ -247,13 +247,14 @@ class ConfigSplitEntityForm extends EntityForm {
         ]));
     }
     $folder = $form_state->getValue('folder');
-    $storage_path = DRUPAL_ROOT . '/' . $folder;
-    if (!empty($folder) && !(realpath($storage_path))) {
+    if (!file_exists($folder)) {
       drupal_set_message(
-        $this->t('The storage path %path for %label Configuration Split Setting does not exists or is not writable', [
-          '%label' => $config_split->label(),
-          '%path' => $storage_path,
-        ]), 'warning');
+        $this->t('The storage path "%path" for %label Configuration Split Setting does not exist. Make sure it exists and is writable.',
+          [
+            '%label' => $config_split->label(),
+            '%path' => $folder,
+          ]
+        ), 'warning');
     }
     $form_state->setRedirectUrl($config_split->toUrl('collection'));
   }
