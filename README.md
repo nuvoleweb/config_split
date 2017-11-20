@@ -1,5 +1,7 @@
 # Configuration split
 
+[![Build Status](https://travis-ci.org/nuvoleweb/config_split.svg?branch=8.x-1.x)](https://travis-ci.org/nuvoleweb/config_split)
+
 ## Background
 
 The Drupal 8 configuration management works best when importing and exporting

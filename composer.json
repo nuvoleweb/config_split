@@ -26,5 +26,36 @@
   "license": "GPL-2.0+",
   "require": {
     "drupal/config_filter": "*"
+  },
+  "require-dev": {
+    "nuvoleweb/drupal-component-scaffold": "*",
+    "drupal/console": "~1",
+    "drush/drush": "*",
+    "drupal/coder": "8.2.8",
+    "drupal/core": "~8",
+    "mikey179/vfsStream": "*",
+    "phpunit/phpunit": "~5",
+    "phpro/grumphp": "0.11.4",
+    "squizlabs/php_codesniffer": "~2.9"
+  },
+  "repositories": [
+    {
+      "type": "composer",
+      "url": "https://packages.drupal.org/8"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Drupal\\config_split\\": "src",
+      "Drupal\\Tests\\config_split\\": "tests/src"
+    }
+  },
+  "extra": {
+    "installer-paths": {
+      "web/core": ["type:drupal-core"],
+      "web/modules/contrib/{$name}": ["type:drupal-module"],
+      "web/profiles/contrib/{$name}": ["type:drupal-profile"],
+      "web/themes/contrib/{$name}": ["type:drupal-theme"]
+    }
   }
 }

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit bootstrap="vendor/autoload.php" backupGlobals="true" colors="true" >
+  <php>
+    <ini name="error_reporting" value="32767"/>
+    <var name="namespaces" value=""/>
+    <ini name="memory_limit" value="-1"/>
+    <env name="SIMPLETEST_DB" value="mysql://travis:@127.0.0.1/drupal"/>
+  </php>
+  <testsuites>
+    <testsuite>
+      <directory>./tests/</directory>
+    </testsuite>
+  </testsuites>
+</phpunit>

@@ -1,0 +1,40 @@
+language: php
+dist: precise
+
+php:
+  - 7.0
+
+env:
+  global:
+env:
+  global:
+    - PATH=$PATH:/home/travis/.composer/vendor/bin:$TRAVIS_BUILD_DIR/vendor/bin
+  matrix:
+    - DRUPAL_VERSION=8.3.x-dev
+    - DRUPAL_VERSION=8.4.x-dev
+    - DRUPAL_VERSION=8.5.x-dev
+
+matrix:
+  allow_failures:
+    - php: 7.0
+      env: DRUPAL_VERSION=8.5.x-dev
+
+install:
+  - composer self-update
+  - composer require drupal/core:$DRUPAL_VERSION --dev --prefer-dist
+
+before_script:
+  # Set sendmail so drush doesn't throw an error during site install.
+  - echo "sendmail_path=`which true`" >> `php --ini | grep "Loaded Configuration" | awk '{print $4}'`
+  # Create database.
+  - mysql -e 'create database drupal'
+  # Install Drupal 8 target site.
+  - drush --root=$PWD/web si testing -y --db-url=mysql://travis:@127.0.0.1/drupal
+
+script:
+  - cd $TRAVIS_BUILD_DIR
+  - grumphp run
+  - phpunit
+
+notifications:
+  email: false
