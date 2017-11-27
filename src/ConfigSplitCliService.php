@@ -187,7 +187,7 @@ class ConfigSplitCliService {
     else {
       $config_name = $this->getSplitName($split);
 
-      $plugin_id = $this->getPliginIdFromConfigName($config_name);
+      $plugin_id = $this->getPluginIdFromConfigName($config_name);
       $filter = $this->configFilterManager->getFilterInstance($plugin_id);
 
       // Use a GhostStorage so that we only export the split.
@@ -226,7 +226,7 @@ class ConfigSplitCliService {
     }
     else {
       $config_name = $this->getSplitName($split);
-      $filter = $this->configFilterManager->getFilterInstance($this->getPliginIdFromConfigName($config_name));
+      $filter = $this->configFilterManager->getFilterInstance($this->getPluginIdFromConfigName($config_name));
 
       // Filter the active storage so we only import the split.
       $storage = new FilteredStorage($this->activeStorage, [$filter]);
@@ -388,7 +388,7 @@ class ConfigSplitCliService {
    * @return string
    *   The plugin id.
    */
-  protected function getPliginIdFromConfigName($name) {
+  protected function getPluginIdFromConfigName($name) {
     return 'config_split:' . str_replace('config_split.config_split.', '', $name);
   }
 
