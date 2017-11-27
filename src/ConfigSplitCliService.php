@@ -176,8 +176,10 @@ class ConfigSplitCliService {
    *   The io interface of the cli tool calling the method.
    * @param callable $t
    *   The translation function akin to t().
+   * @param bool $confirmed
+   *   Whether the export is already confirmed by the console input.
    */
-  public function ioExport($split, $io, callable $t) {
+  public function ioExport($split, $io, callable $t, $confirmed = FALSE) {
     if (!$split) {
       $message = $t('Do a normal (including filters) config export?');
       $storage = $this->syncStorage;
@@ -199,7 +201,7 @@ class ConfigSplitCliService {
       $message .= $t('Export the configuration?');
     }
 
-    if ($io->confirm($message)) {
+    if ($confirmed || $io->confirm($message)) {
       $this->export($storage);
       $io->success($t("Configuration successfully exported."));
     }
@@ -214,8 +216,10 @@ class ConfigSplitCliService {
    *   The $io interface of the cli tool calling.
    * @param callable $t
    *   The translation function akin to t().
+   * @param bool $confirmed
+   *   Whether the import is already confirmed by the console input.
    */
-  public function ioImport($split, $io, callable $t) {
+  public function ioImport($split, $io, callable $t, $confirmed = FALSE) {
     if (!$split) {
       $message = $t('Do a normal (including filters) config import?');
       $storage = $this->syncStorage;
@@ -235,7 +239,7 @@ class ConfigSplitCliService {
     }
 
     try {
-      if ($io->confirm($message)) {
+      if ($confirmed || $io->confirm($message)) {
         $status = $this->import($storage);
         switch ($status) {
           case ConfigSplitCliService::COMPLETE:
