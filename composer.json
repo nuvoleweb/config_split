@@ -31,10 +31,10 @@
     "nuvoleweb/drupal-component-scaffold": "*",
     "drupal/console": "~1",
     "drush/drush": "*",
-    "drupal/coder": "8.2.8",
+    "drupal/coder": "~8",
     "drupal/core": "~8",
     "mikey179/vfsStream": "*",
-    "phpunit/phpunit": "~5",
+    "phpunit/phpunit": "~4|~5",
     "phpro/grumphp": "0.11.4",
     "squizlabs/php_codesniffer": "~2.9"
   },
