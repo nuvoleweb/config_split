@@ -74,4 +74,27 @@ class ConfigSplitEntityListBuilder extends ConfigEntityListBuilder {
     return $row + parent::buildRow($entity);
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function getDefaultOperations(EntityInterface $entity) {
+    /** @var \Drupal\Core\Config\Entity\ConfigEntityInterface $entity */
+    $operations = parent::getDefaultOperations($entity);
+    if (!$entity->get('status') && $entity->hasLinkTemplate('enable')) {
+      $operations['enable'] = [
+        'title' => t('Enable'),
+        'weight' => 40,
+        'url' => $entity->toUrl('enable'),
+      ];
+    }
+    elseif ($entity->hasLinkTemplate('disable')) {
+      $operations['disable'] = [
+        'title' => t('Disable'),
+        'weight' => 50,
+        'url' => $entity->toUrl('disable'),
+      ];
+    }
+    return $operations;
+  }
+
 }
