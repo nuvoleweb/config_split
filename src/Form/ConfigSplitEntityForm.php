@@ -247,25 +247,25 @@ class ConfigSplitEntityForm extends EntityForm {
 
     switch ($status) {
       case SAVED_NEW:
-        drupal_set_message($this->t('Created the %label Configuration Split Setting.', [
+        $this->messenger()->addStatus($this->t('Created the %label Configuration Split Setting.', [
           '%label' => $config_split->label(),
         ]));
         break;
 
       default:
-        drupal_set_message($this->t('Saved the %label Configuration Split Setting.', [
+        $this->messenger()->addStatus($this->t('Saved the %label Configuration Split Setting.', [
           '%label' => $config_split->label(),
         ]));
     }
     $folder = $form_state->getValue('folder');
-    if (!file_exists($folder)) {
-      drupal_set_message(
+    if (!empty($folder) && !file_exists($folder)) {
+      $this->messenger()->addWarning(
         $this->t('The storage path "%path" for %label Configuration Split Setting does not exist. Make sure it exists and is writable.',
           [
             '%label' => $config_split->label(),
             '%path' => $folder,
           ]
-        ), 'warning');
+        ));
     }
     $form_state->setRedirectUrl($config_split->toUrl('collection'));
   }

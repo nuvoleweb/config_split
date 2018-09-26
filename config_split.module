@@ -35,7 +35,8 @@ function config_split_form_config_admin_import_form_alter(&$form, FormStateInter
         return $active[$filed] != $staged[$filed];
       }, $fields));
       if ($warnings) {
-        drupal_set_message(t('The configuration for @split has changed, consider a single import for it first.', ['@split' => $config_split_entity->label()]), 'warning');
+        \Drupal::messenger()
+          ->addWarning(t('The configuration for @split has changed, consider a single import for it first.', ['@split' => $config_split_entity->label()]));
       }
     }
   }
