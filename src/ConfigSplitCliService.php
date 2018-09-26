@@ -408,10 +408,11 @@ class ConfigSplitCliService {
     }
 
     if (!in_array($name, $this->activeStorage->listAll('config_split.config_split.'))) {
-      $names = '';
-      foreach ($this->activeStorage->listAll('config_split.config_split.') as $name) {
-        $names .= $name . ', ';
+      $names = [];
+      foreach ($this->activeStorage->listAll('config_split.config_split.') as $split_name) {
+        $names[] = $split_name;
       }
+      $names = implode(', ', $names);
 
       throw new \InvalidArgumentException('The following split is not available: ' . $name . PHP_EOL . 'Available names: ' . $names);
     }
