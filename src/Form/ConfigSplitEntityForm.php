@@ -229,7 +229,11 @@ class ConfigSplitEntityForm extends EntityForm {
     if (!is_array($text)) {
       $text = explode("\n", $text);
     }
-    array_walk($text, 'strtolower');
+
+    foreach ($text as &$config_entry) {
+      $config_entry = strtolower($config_entry);
+    }
+
     // Filter out illegal characters.
     return array_filter(preg_replace('/[^a-z0-9_\.\-\*]+/', '', $text));
   }
