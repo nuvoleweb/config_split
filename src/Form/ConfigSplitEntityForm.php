@@ -49,6 +49,12 @@ class ConfigSplitEntityForm extends EntityForm {
       '#title' => $this->t('Static Settings'),
       '#description' => $this->t("These settings need a cache clear when overridden in settings.php and the split needs to be single imported before the config import for new values to take effect."),
     ];
+    $form['static_fieldset']['description'] = [
+      '#type' => 'textarea',
+      '#title' => $this->t('Description'),
+      '#description' => $this->t('Describe this config split setting. The text will be displayed on the <em>Configuration Split Setting</em> list page.'),
+      '#default_value' => $config->get('description'),
+    ];
     $form['static_fieldset']['folder'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Folder'),

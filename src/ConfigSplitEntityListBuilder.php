@@ -53,6 +53,7 @@ class ConfigSplitEntityListBuilder extends ConfigEntityListBuilder {
   public function buildHeader() {
     $header['label'] = $this->t('Configuration Split Setting');
     $header['id'] = $this->t('Machine name');
+    $header['description'] = $this->t('Description');
     $header['status'] = $this->t('Status');
     return $header + parent::buildHeader();
   }
@@ -64,6 +65,7 @@ class ConfigSplitEntityListBuilder extends ConfigEntityListBuilder {
     $row['label'] = $entity->label();
     $row['id'] = $entity->id();
     $config = $this->configFactory->get('config_split.config_split.' . $entity->id());
+    $row['description'] = $config->get('description');
     $row['status'] = $config->get('status') ? 'active' : 'inactive';
     if ($config->get('status') != $entity->status()) {
       $row['status'] .= ' (overwritten)';

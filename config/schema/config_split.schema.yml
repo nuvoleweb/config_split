@@ -8,6 +8,9 @@ config_split.config_split.*:
     label:
       type: label
       label: 'Label'
+    description:
+      type: label
+      label: 'Description'
     uuid:
       type: string
     weight:

@@ -38,6 +38,7 @@ use Drupal\Core\Entity\EntityTypeInterface;
  *   config_export = {
  *     "id",
  *     "label",
+ *     "description",
  *     "folder",
  *     "module",
  *     "theme",
@@ -65,6 +66,13 @@ class ConfigSplitEntity extends ConfigEntityBase implements ConfigSplitEntityInt
    * @var string
    */
   protected $label;
+
+  /**
+   * The Configuration Split Setting description.
+   *
+   * @var string
+   */
+  protected $description = '';
 
   /**
    * The folder to export to.
