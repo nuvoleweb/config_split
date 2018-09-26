@@ -55,6 +55,7 @@ class ConfigSplitCliServiceTest extends KernelTestBase {
   public function testVanillaExport() {
     // Set the "current user" to have "export configuration" permission.
     $account = $this->prophesize(AccountInterface::class);
+    $account->id()->willReturn(27);
     $account->hasPermission('export configuration')->willReturn(TRUE);
     $this->container->set('current_user', $account->reveal());
 
