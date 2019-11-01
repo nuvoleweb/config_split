@@ -298,7 +298,10 @@ class ConfigSplitCliService {
 
     // Copy everything.
     foreach ($active->listAll() as $name) {
-      $storage->write($name, $active->read($name));
+      $config_data = $active->read($name);
+      if ($config_data !== FALSE) {
+        $storage->write($name, $config_data);
+      }
     }
 
     // Get all override data from the remaining collections.
