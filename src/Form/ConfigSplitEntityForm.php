@@ -90,6 +90,9 @@ class ConfigSplitEntityForm extends EntityForm {
     }, $module_handler->getModuleList());
     // Add the existing ones with the machine name so they do not get lost.
     $modules = $modules + array_combine(array_keys($config->get('module')), array_keys($config->get('module')));
+
+    // Sorting module list by name for making selection easier.
+    asort($modules, SORT_NATURAL | SORT_FLAG_CASE);
     $form['blacklist_fieldset']['module'] = [
       '#type' => 'select',
       '#title' => $this->t('Modules'),
