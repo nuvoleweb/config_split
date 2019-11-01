@@ -11,8 +11,6 @@ config_split.config_split.*:
     description:
       type: label
       label: 'Description'
-    uuid:
-      type: string
     weight:
       type: integer
       label: 'Weight'
