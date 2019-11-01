@@ -10,7 +10,7 @@ use Drupal\Core\Entity\EntityTypeInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Provides a listing of Configuration Split Setting entities.
+ * Provides a listing of Configuration Split setting entities.
  */
 class ConfigSplitEntityListBuilder extends ConfigEntityListBuilder {
 
@@ -51,7 +51,7 @@ class ConfigSplitEntityListBuilder extends ConfigEntityListBuilder {
    * {@inheritdoc}
    */
   public function buildHeader() {
-    $header['label'] = $this->t('Configuration Split Setting');
+    $header['label'] = $this->t('Configuration Split setting');
     $header['id'] = $this->t('Machine name');
     $header['description'] = $this->t('Description');
     $header['status'] = $this->t('Status');

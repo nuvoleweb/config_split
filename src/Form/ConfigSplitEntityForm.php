@@ -32,7 +32,7 @@ class ConfigSplitEntityForm extends EntityForm {
       '#title' => $this->t('Label'),
       '#maxlength' => 255,
       '#default_value' => $config->label(),
-      '#description' => $this->t("Label for the Configuration Split Setting."),
+      '#description' => $this->t("Label for the Configuration Split setting."),
       '#required' => TRUE,
     ];
 
@@ -52,7 +52,7 @@ class ConfigSplitEntityForm extends EntityForm {
     $form['static_fieldset']['description'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Description'),
-      '#description' => $this->t('Describe this config split setting. The text will be displayed on the <em>Configuration Split Setting</em> list page.'),
+      '#description' => $this->t('Describe this config split setting. The text will be displayed on the <em>Configuration Split setting</em> list page.'),
       '#default_value' => $config->get('description'),
     ];
     $form['static_fieldset']['folder'] = [
@@ -300,20 +300,20 @@ class ConfigSplitEntityForm extends EntityForm {
 
     switch ($status) {
       case SAVED_NEW:
-        $this->messenger()->addStatus($this->t('Created the %label Configuration Split Setting.', [
+        $this->messenger()->addStatus($this->t('Created the %label Configuration Split setting.', [
           '%label' => $config_split->label(),
         ]));
         break;
 
       default:
-        $this->messenger()->addStatus($this->t('Saved the %label Configuration Split Setting.', [
+        $this->messenger()->addStatus($this->t('Saved the %label Configuration Split setting.', [
           '%label' => $config_split->label(),
         ]));
     }
     $folder = $form_state->getValue('folder');
     if (!empty($folder) && !file_exists($folder)) {
       $this->messenger()->addWarning(
-        $this->t('The storage path "%path" for %label Configuration Split Setting does not exist. Make sure it exists and is writable.',
+        $this->t('The storage path "%path" for %label Configuration Split setting does not exist. Make sure it exists and is writable.',
           [
             '%label' => $config_split->label(),
             '%path' => $folder,

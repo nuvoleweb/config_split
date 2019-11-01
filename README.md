@@ -1,4 +1,4 @@
-# Configuration split
+# Configuration Split
 
 ## Background
 
@@ -16,7 +16,7 @@ separate directories when exporting, and get merged together when importing.
 It is possible to define in settings.php which of these sets should be active
 and considered for the export and import.
 
-## How to use it.
+## How to use it
 
 Let us assume that you configured your sync directory as follows:
 ```php

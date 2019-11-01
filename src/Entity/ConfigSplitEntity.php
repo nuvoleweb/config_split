@@ -6,11 +6,11 @@ use Drupal\Core\Config\Entity\ConfigEntityBase;
 use Drupal\Core\Entity\EntityTypeInterface;
 
 /**
- * Defines the Configuration Split Setting entity.
+ * Defines the Configuration Split setting entity.
  *
  * @ConfigEntityType(
  *   id = "config_split",
- *   label = @Translation("Configuration Split Setting"),
+ *   label = @Translation("Configuration Split setting"),
  *   handlers = {
  *     "list_builder" = "Drupal\config_split\ConfigSplitEntityListBuilder",
  *     "form" = {
@@ -56,21 +56,21 @@ use Drupal\Core\Entity\EntityTypeInterface;
 class ConfigSplitEntity extends ConfigEntityBase implements ConfigSplitEntityInterface {
 
   /**
-   * The Configuration Split Setting ID.
+   * The Configuration Split setting ID.
    *
    * @var string
    */
   protected $id;
 
   /**
-   * The Configuration Split Setting label.
+   * The Configuration Split setting label.
    *
    * @var string
    */
   protected $label;
 
   /**
-   * The Configuration Split Setting description.
+   * The Configuration Split setting description.
    *
    * @var string
    */

@@ -1,6 +1,6 @@
 config_split.config_split.*:
   type: config_entity
-  label: 'Configuration Split Setting'
+  label: 'Configuration Split setting'
   mapping:
     id:
       type: string
