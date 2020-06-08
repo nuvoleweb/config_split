@@ -13,6 +13,7 @@ use Drupal\Core\Config\FileStorageFactory;
 use Drupal\Core\Config\StorageComparer;
 use Drupal\Core\Config\StorageInterface;
 use Drupal\Core\Config\TypedConfigManagerInterface;
+use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Extension\ModuleInstallerInterface;
 use Drupal\Core\Extension\ThemeHandlerInterface;
@@ -129,6 +130,13 @@ class ConfigSplitCliService {
   protected $stringTranslation;
 
   /**
+   * The ModuleExtensionList to be passed to the config importer.
+   *
+   * @var \Drupal\Core\Extension\ModuleExtensionList
+   */
+  protected $moduleExtensionList;
+
+  /**
    * List of messages.
    *
    * @var array
@@ -150,7 +158,8 @@ class ConfigSplitCliService {
     ModuleHandlerInterface $module_handler,
     ModuleInstallerInterface $module_installer,
     ThemeHandlerInterface $theme_handler,
-    TranslationInterface $string_translation
+    TranslationInterface $string_translation,
+    ModuleExtensionList $moduleExtensionList
   ) {
     $this->configFilterManager = $config_filter_manager;
     $this->storageFactory = $storageFactory;
@@ -164,6 +173,7 @@ class ConfigSplitCliService {
     $this->moduleInstaller = $module_installer;
     $this->themeHandler = $theme_handler;
     $this->stringTranslation = $string_translation;
+    $this->moduleExtensionList = $moduleExtensionList;
     $this->errors = [];
   }
 
@@ -337,7 +347,7 @@ class ConfigSplitCliService {
    */
   public function import(StorageInterface $storage) {
 
-    $comparer = new StorageComparer($storage, $this->activeStorage, $this->configManager);
+    $comparer = new StorageComparer($storage, $this->activeStorage);
 
     if (!$comparer->createChangelist()->hasChanges()) {
       return static::NO_CHANGES;
@@ -352,7 +362,8 @@ class ConfigSplitCliService {
       $this->moduleHandler,
       $this->moduleInstaller,
       $this->themeHandler,
-      $this->stringTranslation
+      $this->stringTranslation,
+      $this->moduleExtensionList
     );
 
     if ($importer->alreadyImporting()) {
