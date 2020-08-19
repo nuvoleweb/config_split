@@ -11,7 +11,6 @@ use Drupal\Core\Config\StorageInterface;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
-use Drupal\Component\PhpStorage\FileStorage as PhpFileStorage;
 use Drupal\Component\FileSecurity\FileSecurity;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -411,12 +410,7 @@ class SplitFilter extends ConfigFilterBase implements ContainerFactoryPluginInte
       if (file_exists($directory) && is_writable($directory)) {
         $htaccess_path = rtrim($directory, '/\\') . '/.htaccess';
         if (!file_exists($htaccess_path)) {
-          if (class_exists(FileSecurity::class)) {
-            file_put_contents($htaccess_path, FileSecurity::htaccessLines(TRUE));
-          }
-          else {
-            file_put_contents($htaccess_path, PhpFileStorage::htaccessLines(TRUE));
-          }
+          file_put_contents($htaccess_path, FileSecurity::htaccessLines(TRUE));
           @chmod($htaccess_path, 0444);
         }
       }
