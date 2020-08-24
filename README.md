@@ -5,9 +5,9 @@
 The Drupal 8 configuration management works best when importing and exporting
 the whole set of the sites configuration. However, sometimes developers like to
 opt out of the robustness of CM and have a super-set of configuration active on
-their development machine. The canonical example for this is to have the 
+their development machine. The canonical example for this is to have the
 <code>devel</code> module enabled or having a few block placements or views in
-the development environment and then not export them into the set of 
+the development environment and then not export them into the set of
 configuration to be deployed, yet still being able to share the development
 configuration with colleagues.
 
@@ -20,12 +20,11 @@ and considered for the export and import.
 
 Let us assume that you configured your sync directory as follows:
 ```php
-$config_directories[CONFIG_SYNC_DIRECTORY] = '../config/sync';
+$settings['config_sync_directory'] = '../config/sync';
 ```
 Create a split with the folder `../config/my-split-folder` and create that
 directory. Now add a module that is currently active that you wish not to
-export, say `devel`. Next export all the configuration (with `drush cex` for
-drush >= 8.1.10 and `drush csex` for older versions of drush).
+export, say `devel`. Next export all the configuration (with `drush cex`).
 This should have removed devel from `core.extensions` and moved the devel
 configuration to the split folder.
 Next you can disable the split in the UI and enable it with a config override.
