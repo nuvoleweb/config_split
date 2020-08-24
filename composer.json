@@ -30,6 +30,10 @@
   "conflict": {
     "drupal/console": "<1.3.2"
   },
+  "suggest": {
+    "drupal/chosen": "Chosen uses the Chosen jQuery plugin to make the <select> elements more user-friendly.",
+    "drupal/select2_all": "Applies the Select2 library to all select fields on the site similar to the Chosen module."
+  },
   "extra": {
     "drush": {
       "services": {

@@ -3,8 +3,11 @@
 namespace Drupal\config_split\Form;
 
 use Drupal\Core\Entity\EntityForm;
+use Drupal\Core\Extension\ThemeHandlerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Site\Settings;
+use Drupal\Core\State\StateInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Class ConfigSplitEntityForm.
@@ -14,11 +17,41 @@ use Drupal\Core\Site\Settings;
 class ConfigSplitEntityForm extends EntityForm {
 
   /**
+   * The drupal state.
+   *
+   * @var \Drupal\Core\State\StateInterface
+   */
+  protected $state;
+
+  /**
    * Drupal\Core\Extension\ThemeHandler definition.
    *
    * @var \Drupal\Core\Extension\ThemeHandlerInterface
    */
   protected $themeHandler;
+
+  /**
+   * Constructs a new class instance.
+   *
+   * @param \Drupal\Core\State\StateInterface $state
+   *   The drupal state.
+   * @param \Drupal\Core\Extension\ThemeHandlerInterface $themeHandler
+   *   The theme handler.
+   */
+  public function __construct(StateInterface $state, ThemeHandlerInterface $themeHandler) {
+    $this->state = $state;
+    $this->themeHandler = $themeHandler;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('state'),
+      $container->get('theme_handler')
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -113,8 +146,7 @@ class ConfigSplitEntityForm extends EntityForm {
     ];
 
     // We should probably find a better way for this.
-    // @codingStandardsIgnoreStart
-    $theme_handler = \Drupal::service('theme_handler');
+    $theme_handler = $this->themeHandler;
     $themes = array_map(function ($theme) use ($theme_handler) {
       return $theme_handler->getName($theme->getName());
     }, $theme_handler->listInfo());
@@ -129,7 +161,6 @@ class ConfigSplitEntityForm extends EntityForm {
     ];
     // At this stage we do not support themes. @TODO: support themes.
     $form['blacklist_fieldset']['theme']['#access'] = FALSE;
-    // @codingStandardsIgnoreEnd
 
     $options = array_combine($this->configFactory()->listAll(), $this->configFactory()->listAll());
 
@@ -238,13 +269,29 @@ class ConfigSplitEntityForm extends EntityForm {
   }
 
   /**
-   * If the chosen module is active, the form must use select field.
+   * If the chosen or select2 module is active, the form must use select field.
    *
    * @return bool
    *   True if the form must use a select field
    */
   protected function useSelectList() {
-    return $this->moduleHandler->moduleExists('chosen');
+    // Allow the setting to be overwritten with the drupal state.
+    $stateOverride = $this->state->get('config_split_use_select');
+    if ($stateOverride !== NULL) {
+      // Honestly this is probably only useful in tests or if another module
+      // comes along and does what chosen or select2 do.
+      return (bool) $stateOverride;
+    }
+
+    // Modules make the select widget useful.
+    foreach (['chosen', 'select2_all'] as $module) {
+      if ($this->moduleHandler->moduleExists($module)) {
+        return TRUE;
+      }
+    }
+
+    // Fall back to checkboxes.
+    return FALSE;
   }
 
   /**
