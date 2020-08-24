@@ -111,7 +111,7 @@ class ConfigSplitEntityForm extends EntityForm {
     $form['blacklist_fieldset'] = [
       '#type' => 'fieldset',
       '#title' => $this->t('Complete Split'),
-      '#description' => $this->t("<em>Complete Split/Blacklist:</em>
+      '#description' => $this->t("<em>Complete Split:</em>
        Configuration listed here will be removed from the sync directory and
        saved in the split directory instead. Modules will be removed from
        core.extension when exporting (and added back when importing with the
@@ -184,7 +184,7 @@ class ConfigSplitEntityForm extends EntityForm {
     $form['graylist_fieldset'] = [
       '#type' => 'fieldset',
       '#title' => $this->t('Conditional Split'),
-      '#description' => $this->t("<em>Conditional Split/Graylist:</em>
+      '#description' => $this->t("<em>Conditional Split:</em>
        Configuration listed here will be left untouched in the main sync
        directory. The <em>currently active</em> version will be exported to the
        split directory.<br />
