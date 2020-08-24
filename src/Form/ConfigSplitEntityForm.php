@@ -140,7 +140,7 @@ class ConfigSplitEntityForm extends EntityForm {
       '#title' => $this->t('Modules'),
       '#description' => $this->t('Select modules to split. Configuration depending on the modules is automatically split off completely as well.'),
       '#options' => $modules,
-      '#size' => 5,
+      '#size' => 20,
       '#multiple' => TRUE,
       '#default_value' => array_keys($config->get('module')),
     ];
@@ -169,7 +169,7 @@ class ConfigSplitEntityForm extends EntityForm {
       '#title' => $this->t('Configuration items'),
       '#description' => $this->t('Select configuration to split. Configuration depending on split modules does not need to be selected here specifically.'),
       '#options' => $options,
-      '#size' => 5,
+      '#size' => 20,
       '#multiple' => TRUE,
       '#default_value' => array_intersect($config->get('blacklist'), array_keys($options)),
     ];
@@ -197,7 +197,7 @@ class ConfigSplitEntityForm extends EntityForm {
       '#title' => $this->t('Configuration items'),
       '#description' => $this->t('Select configuration to split conditionally.'),
       '#options' => $options,
-      '#size' => 5,
+      '#size' => 20,
       '#multiple' => TRUE,
       '#default_value' => array_intersect($config->get('graylist'), array_keys($options)),
     ];
