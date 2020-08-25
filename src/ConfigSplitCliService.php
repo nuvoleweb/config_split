@@ -3,6 +3,7 @@
 namespace Drupal\config_split;
 
 use Drupal\config_filter\Config\FilteredStorage;
+use Drupal\config_filter\Config\FilteredStorageInterface;
 use Drupal\config_filter\ConfigFilterManagerInterface;
 use Drupal\config_filter\ConfigFilterStorageFactory;
 use Drupal\config_split\Config\GhostStorage;
@@ -191,8 +192,12 @@ class ConfigSplitCliService {
    */
   public function ioExport($split, $io, callable $t, $confirmed = FALSE) {
     if (!$split) {
+      $io->warning('Please consider using `drush config:export` instead for exporting all config.');
       $message = $t('Do a normal (including filters) config export?');
       $storage = $this->syncStorage;
+      if (!$storage instanceof FilteredStorageInterface) {
+        throw new \RuntimeException('Only exporting splits is supported when not using Config Filter 8.x-1.x');
+      }
     }
     else {
       $config_name = $this->getSplitName($split);
@@ -231,8 +236,12 @@ class ConfigSplitCliService {
    */
   public function ioImport($split, $io, callable $t, $confirmed = FALSE) {
     if (!$split) {
+      $io->text('Please consider using `drush config:import` instead for importing all config.');
       $message = $t('Do a normal (including filters) config import?');
       $storage = $this->syncStorage;
+      if (!$storage instanceof FilteredStorageInterface) {
+        throw new \RuntimeException('Only importing splits is supported when not using Config Filter 8.x-1.x');
+      }
     }
     else {
       $config_name = $this->getSplitName($split);
