@@ -402,7 +402,13 @@ class SplitFilter extends ConfigFilterBase implements ContainerFactoryPluginInte
   protected static function getSecondaryStorage(ImmutableConfig $config, Connection $connection) {
     // Here we could determine to use relative paths etc.
     if ($directory = $config->get('folder')) {
-
+      if (!is_dir($directory)) {
+        // If the directory doesn't exist, attempt to create it.
+        // This might have some negative consequences but we trust the user to
+        // have properly configured their site.
+        /* @noinspection MkdirRaceConditionInspection */
+        @mkdir($directory, 0777, TRUE);
+      }
       // The following is roughly: file_save_htaccess($directory, TRUE, TRUE);
       // But we can't use global drupal functions and we want to write the
       // .htaccess file to ensure the configuration is protected and the
