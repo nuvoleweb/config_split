@@ -74,8 +74,6 @@ class SplitFilter extends ConfigFilterBase implements ContainerFactoryPluginInte
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->manager = $manager;
     $this->secondaryStorage = $secondary;
-    $this->calculateBlacklist();
-    $this->calculateGraylist();
   }
 
   /**
@@ -105,6 +103,32 @@ class SplitFilter extends ConfigFilterBase implements ContainerFactoryPluginInte
       $container->get('config.manager'),
       self::getSecondaryStorage($config, $container->get('database'))
     );
+  }
+
+  /**
+   * Get the complete split config.
+   *
+   * @return string[]
+   *   The config names.
+   */
+  protected function getBlacklist() {
+    if (empty($this->blacklist)) {
+      $this->calculateBlacklist();
+    }
+    return $this->blacklist;
+  }
+
+  /**
+   * Get the conditional split config.
+   *
+   * @return string[]
+   *   The config names.
+   */
+  protected function getGraylist() {
+    if (empty($this->graylist)) {
+      $this->calculateGraylist();
+    }
+    return $this->graylist;
   }
 
   /**
@@ -166,14 +190,14 @@ class SplitFilter extends ConfigFilterBase implements ContainerFactoryPluginInte
       throw new \InvalidArgumentException('The split storage has to be set and exist for write operations.');
     }
 
-    if (in_array($name, $this->blacklist)) {
+    if (in_array($name, $this->getBlacklist())) {
       if ($data) {
         $this->secondaryStorage->write($name, $data);
       }
 
       return NULL;
     }
-    elseif (in_array($name, $this->graylist)) {
+    elseif (in_array($name, $this->getGraylist())) {
       if (!$this->configuration['graylist_skip_equal'] || !$this->source || $this->source->read($name) != $data) {
         // The configuration is in the graylist but skip-equal is not set or
         // the source does not have the same data, so write to secondary and
@@ -232,7 +256,7 @@ class SplitFilter extends ConfigFilterBase implements ContainerFactoryPluginInte
       $this->secondaryStorage->delete($name);
     }
 
-    if (in_array($name, $this->graylist) && !in_array($name, $this->blacklist)) {
+    if (in_array($name, $this->getGraylist()) && !in_array($name, $this->getBlacklist())) {
       // Do not delete graylisted config.
       return FALSE;
     }
@@ -280,7 +304,7 @@ class SplitFilter extends ConfigFilterBase implements ContainerFactoryPluginInte
       }
     }
 
-    if (!empty($this->graylist)) {
+    if (!empty($this->getGraylist())) {
       // If the split uses the graylist feature delete individually.
       return FALSE;
     }

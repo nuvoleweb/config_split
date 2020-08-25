@@ -45,6 +45,10 @@ class SplitFilterTest extends UnitTestCase {
 
     $filter = new SplitFilter($configuration, 'config_split', [], $manager->reveal());
 
+    $method = new \ReflectionMethod(SplitFilter::class, 'getBlacklist');
+    $method->setAccessible(TRUE);
+    $method->invoke($filter);
+
     // Get the protected blacklist property.
     $blacklist = new \ReflectionProperty(SplitFilter::class, 'blacklist');
     $blacklist->setAccessible(TRUE);
@@ -79,6 +83,10 @@ class SplitFilterTest extends UnitTestCase {
       ->willReturn(['f' => 0, 'g' => 0, 'b' => 0]);
 
     $filter = new SplitFilter($configuration, 'config_split', [], $manager->reveal());
+
+    $method = new \ReflectionMethod(SplitFilter::class, 'getGraylist');
+    $method->setAccessible(TRUE);
+    $method->invoke($filter);
 
     // Get the protected blacklist property.
     $graylist = new \ReflectionProperty(SplitFilter::class, 'graylist');
@@ -141,6 +149,14 @@ class SplitFilterTest extends UnitTestCase {
     $manager->findConfigEntityDependents(Argument::exact('config'), Argument::exact($expected))->willReturn([]);
 
     $filter = new SplitFilter($configuration, 'config_split', [], $manager->reveal());
+
+    // Call the methods which calculate the properties.
+    $getBlacklist = new \ReflectionMethod(SplitFilter::class, 'getBlacklist');
+    $getBlacklist->setAccessible(TRUE);
+    $getBlacklist->invoke($filter);
+    $getGraylist = new \ReflectionMethod(SplitFilter::class, 'getGraylist');
+    $getGraylist->setAccessible(TRUE);
+    $getGraylist->invoke($filter);
 
     // Get the protected blacklist property.
     $blacklist = new \ReflectionProperty(SplitFilter::class, 'blacklist');
