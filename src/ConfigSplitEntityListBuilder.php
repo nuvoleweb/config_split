@@ -62,7 +62,7 @@ class ConfigSplitEntityListBuilder extends ConfigEntityListBuilder {
    * {@inheritdoc}
    */
   public function buildRow(EntityInterface $entity) {
-    $row['label'] = $entity->label();
+    $row['label'] = $entity->toLink();
     $row['id'] = $entity->id();
     $config = $this->configFactory->get('config_split.config_split.' . $entity->id());
     $row['description'] = $config->get('description');

@@ -44,15 +44,7 @@ class SplitFilterTest extends UnitTestCase {
       ->willReturn(['f' => 0, 'g' => 0, 'b' => 0]);
 
     $filter = new SplitFilter($configuration, 'config_split', [], $manager->reveal());
-
-    $method = new \ReflectionMethod(SplitFilter::class, 'getBlacklist');
-    $method->setAccessible(TRUE);
-    $method->invoke($filter);
-
-    // Get the protected blacklist property.
-    $blacklist = new \ReflectionProperty(SplitFilter::class, 'blacklist');
-    $blacklist->setAccessible(TRUE);
-    $actual = $blacklist->getValue($filter);
+    $actual = $filter->getBlacklist();
     // The order of values and keys are not important.
     sort($actual);
     $expected = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'module1.settings'];
@@ -83,15 +75,7 @@ class SplitFilterTest extends UnitTestCase {
       ->willReturn(['f' => 0, 'g' => 0, 'b' => 0]);
 
     $filter = new SplitFilter($configuration, 'config_split', [], $manager->reveal());
-
-    $method = new \ReflectionMethod(SplitFilter::class, 'getGraylist');
-    $method->setAccessible(TRUE);
-    $method->invoke($filter);
-
-    // Get the protected blacklist property.
-    $graylist = new \ReflectionProperty(SplitFilter::class, 'graylist');
-    $graylist->setAccessible(TRUE);
-    $actual = $graylist->getValue($filter);
+    $actual = $filter->getGraylist();
     // The order of values and keys are not important.
     sort($actual);
     $this->assertArrayEquals(['a', 'b', 'f', 'g'], $actual);
@@ -122,10 +106,7 @@ class SplitFilterTest extends UnitTestCase {
       ->willReturn(['f' => 0, 'b' => 0]);
 
     $filter = new SplitFilter($configuration, 'config_split', [], $manager->reveal());
-
-    $method = new \ReflectionMethod(SplitFilter::class, 'getBlacklist');
-    $method->setAccessible(TRUE);
-    $actual = $method->invoke($filter);
+    $actual = $filter->getBlacklist();
     // The order of values and keys are not important.
     sort($actual);
     $this->assertArrayEquals(['c', 'd', 'e'], $actual);
@@ -188,16 +169,7 @@ class SplitFilterTest extends UnitTestCase {
     $manager->findConfigEntityDependents(Argument::exact('config'), Argument::exact([]))->willReturn([]);
 
     $filter = new SplitFilter($configuration, 'config_split', [], $manager->reveal());
-
-    // Call the methods which calculate the properties.
-    $reflectionMethod = new \ReflectionMethod(SplitFilter::class, $method);
-    $reflectionMethod->setAccessible(TRUE);
-    $reflectionMethod->invoke($filter);
-
-    // Get the protected blacklist property.
-    $reflectionProperty = new \ReflectionProperty(SplitFilter::class, $name);
-    $reflectionProperty->setAccessible(TRUE);
-    $actual = $reflectionProperty->getValue($filter);
+    $actual = $filter->{$method}();
     $this->assertArrayEquals($expected, $actual);
   }
 

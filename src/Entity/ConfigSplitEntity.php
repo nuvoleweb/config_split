@@ -12,6 +12,7 @@ use Drupal\Core\Entity\EntityTypeInterface;
  *   id = "config_split",
  *   label = @Translation("Configuration Split setting"),
  *   handlers = {
+ *     "view_builder" = "Drupal\config_split\ConfigSplitEntityViewBuilder",
  *     "list_builder" = "Drupal\config_split\ConfigSplitEntityListBuilder",
  *     "form" = {
  *       "add" = "Drupal\config_split\Form\ConfigSplitEntityForm",
@@ -30,6 +31,7 @@ use Drupal\Core\Entity\EntityTypeInterface;
  *     "uuid" = "uuid"
  *   },
  *   links = {
+ *     "canonical" = "/admin/config/development/configuration/config-split/{config_split}",
  *     "add-form" = "/admin/config/development/configuration/config-split/add",
  *     "edit-form" = "/admin/config/development/configuration/config-split/{config_split}/edit",
  *     "delete-form" = "/admin/config/development/configuration/config-split/{config_split}/delete",

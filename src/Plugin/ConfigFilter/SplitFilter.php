@@ -111,7 +111,7 @@ class SplitFilter extends ConfigFilterBase implements ContainerFactoryPluginInte
    * @return string[]
    *   The config names.
    */
-  protected function getBlacklist() {
+  public function getBlacklist() {
     if (empty($this->blacklist)) {
       $this->calculateBlacklist();
     }
@@ -124,7 +124,7 @@ class SplitFilter extends ConfigFilterBase implements ContainerFactoryPluginInte
    * @return string[]
    *   The config names.
    */
-  protected function getGraylist() {
+  public function getGraylist() {
     if (empty($this->graylist)) {
       $this->calculateGraylist();
     }
