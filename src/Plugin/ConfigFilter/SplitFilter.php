@@ -364,7 +364,9 @@ class SplitFilter extends ConfigFilterBase implements ContainerFactoryPluginInte
     });
     sort($blacklist);
     // Finally merge all dependencies of the blacklisted config.
-    $this->blacklist = array_unique(array_merge($blacklist, array_keys($this->manager->findConfigEntityDependents('config', $blacklist))));
+    $blacklist = array_unique(array_merge($blacklist, array_keys($this->manager->findConfigEntityDependents('config', $blacklist))));
+    // Exclude from the complete split what is conditionally split.
+    $this->blacklist = array_diff($blacklist, $this->getGraylist());
   }
 
   /**
