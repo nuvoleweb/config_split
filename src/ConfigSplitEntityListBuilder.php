@@ -82,14 +82,14 @@ class ConfigSplitEntityListBuilder extends ConfigEntityListBuilder {
     $operations = parent::getDefaultOperations($entity);
     if (!$entity->get('status') && $entity->hasLinkTemplate('enable')) {
       $operations['enable'] = [
-        'title' => t('Enable'),
+        'title' => $this->t('Enable'),
         'weight' => 40,
         'url' => $entity->toUrl('enable'),
       ];
     }
     elseif ($entity->hasLinkTemplate('disable')) {
       $operations['disable'] = [
-        'title' => t('Disable'),
+        'title' => $this->t('Disable'),
         'weight' => 50,
         'url' => $entity->toUrl('disable'),
       ];
