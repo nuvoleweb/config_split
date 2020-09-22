@@ -28,8 +28,7 @@
     "drupal/config_filter": "^1||^2"
   },
   "conflict": {
-    "drush/drush": "<10",
-    "drupal/console": "<1.3.2"
+    "drush/drush": "<10"
   },
   "suggest": {
     "drupal/chosen": "Chosen uses the Chosen jQuery plugin to make the <select> elements more user-friendly.",
