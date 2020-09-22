@@ -28,6 +28,7 @@
     "drupal/config_filter": "^1||^2"
   },
   "conflict": {
+    "drush/drush": "<10",
     "drupal/console": "<1.3.2"
   },
   "suggest": {
@@ -37,7 +38,7 @@
   "extra": {
     "drush": {
       "services": {
-        "drush.services.yml": "^9 || ^10"
+        "drush.services.yml": "^10"
       }
     }
   }

@@ -6,11 +6,7 @@ use Drupal\config_split\ConfigSplitCliService;
 use Drush\Commands\DrushCommands;
 
 /**
- * Class ConfigSplitCommands.
- *
- * This is the Drush 9 and 10 commands.
- *
- * @package Drupal\config_split\Commands
+ * The Drush 10 commands.
  */
 class ConfigSplitCommands extends DrushCommands {
 
@@ -35,17 +31,16 @@ class ConfigSplitCommands extends DrushCommands {
    * Export only split configuration to a directory.
    *
    * @param string $split
-   *   The split configuration to export, if none is given do a normal export.
+   *   The split configuration to export.
    *
    * @command config-split:export
    *
    * @usage drush config-split:export development
-   *   Export development configuration; assumes a "development" split export
-   *   only that.
+   *   Export configuration of the "development" split
    *
    * @aliases csex
    */
-  public function splitExport($split = NULL) {
+  public function splitExport($split) {
     $this->cliService->ioExport($split, $this->io(), 'dt');
   }
 
@@ -53,17 +48,16 @@ class ConfigSplitCommands extends DrushCommands {
    * Import only config from a split.
    *
    * @param string $split
-   *   The split configuration to export, if none is given do a normal import.
+   *   The split configuration to import.
    *
    * @command config-split:import
    *
    * @usage drush config-split:import development
-   *   Import development configuration; assumes a "development" split import
-   *   only that.
+   *   Import configuration of the "development" split
    *
    * @aliases csim
    */
-  public function splitImport($split = NULL) {
+  public function splitImport($split) {
     $this->cliService->ioImport($split, $this->io(), 'dt');
   }
 
