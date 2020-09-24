@@ -4,7 +4,7 @@
   "description": "The dev composer file for Config Split. This allows us to use docker for development but still test on the drupal infrastructure.",
   "license": "GPL-2.0-or-later",
   "require": {
-    "drupal/config_filter": "*"
+    "drupal/config_filter": "^1"
   },
   "require-dev": {
     "composer/installers": "^1",
