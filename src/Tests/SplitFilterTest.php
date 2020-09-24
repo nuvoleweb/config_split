@@ -13,9 +13,7 @@ use org\bovigo\vfs\vfsStreamFile;
 use Prophecy\Argument;
 
 /**
- * Class SplitFilterTest.
- *
- * @group config_split
+ * Test filter plugin.
  */
 class SplitFilterTest extends UnitTestCase {
 
