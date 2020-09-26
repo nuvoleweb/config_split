@@ -14,6 +14,8 @@ use Prophecy\Argument;
 
 /**
  * Test filter plugin.
+ *
+ * @group config_split
  */
 class SplitFilterTest extends UnitTestCase {
 
