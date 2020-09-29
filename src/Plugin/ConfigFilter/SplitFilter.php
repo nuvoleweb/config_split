@@ -350,6 +350,13 @@ class SplitFilter extends ConfigFilterBase implements ContainerFactoryPluginInte
     }
 
     $extensions = array_merge([], $modules, $themes);
+
+    if (empty($blacklist) && empty($extensions)) {
+      $this->blacklist = [];
+      // Early return to short-circuit the expensive calculations.
+      return;
+    }
+
     $blacklist = array_filter($this->manager->getConfigFactory()->listAll(), function ($name) use ($extensions, $blacklist) {
       // Filter the list of config objects since they are not included in
       // findConfigEntityDependents.
@@ -374,6 +381,13 @@ class SplitFilter extends ConfigFilterBase implements ContainerFactoryPluginInte
    */
   protected function calculateGraylist() {
     $graylist = $this->configuration['graylist'];
+
+    if (empty($graylist)) {
+      $this->graylist = [];
+      // Early return to short-circuit the expensive calculations.
+      return;
+    }
+
     $graylist = array_filter($this->manager->getConfigFactory()->listAll(), function ($name) use ($graylist) {
       // Add the config name to the graylist if it is in the wildcard list.
       return self::inFilterList($name, $graylist);
