@@ -54,6 +54,9 @@
       "drush/{$name}": ["type:drupal-drush"]
     },
     "drupal-scaffold": {
+      "file-mapping": {
+        "[project-root]/.gitattributes": false
+      },
       "locations": {
         "web-root": "web/"
       }
