@@ -12,6 +12,7 @@ use Drupal\Core\Config\ConfigImporterException;
 use Drupal\Core\Config\ConfigManagerInterface;
 use Drupal\Core\Config\FileStorageFactory;
 use Drupal\Core\Config\StorageComparer;
+use Drupal\Core\Config\StorageCopyTrait;
 use Drupal\Core\Config\StorageInterface;
 use Drupal\Core\Config\TypedConfigManagerInterface;
 use Drupal\Core\Extension\ModuleExtensionList;
@@ -30,6 +31,8 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
  * @internal This service is not an api and may change at any time.
  */
 class ConfigSplitCliService {
+
+  use StorageCopyTrait;
 
   /**
    * The return value indicating no changes were imported.
@@ -300,47 +303,8 @@ class ConfigSplitCliService {
       $active = $this->activeStorage;
     }
 
-    // Make the storage to be the default collection.
-    if ($storage->getCollectionName() != StorageInterface::DEFAULT_COLLECTION) {
-      // This is probably not necessary, but we do it as a precaution.
-      $storage = $storage->createCollection(StorageInterface::DEFAULT_COLLECTION);
-    }
-
-    // Delete all, the filters are responsible for keeping some configuration.
-    $storage->deleteAll();
-
-    // Get the default active storage to copy it to the sync storage.
-    if ($active->getCollectionName() != StorageInterface::DEFAULT_COLLECTION) {
-      // This is probably not necessary, but we do it as a precaution.
-      $active = $active->createCollection(StorageInterface::DEFAULT_COLLECTION);
-    }
-
-    // Copy everything.
-    foreach ($active->listAll() as $name) {
-      $config_data = $active->read($name);
-      if ($config_data !== FALSE) {
-        $storage->write($name, $config_data);
-      }
-    }
-
-    // Get all override data from the remaining collections.
-    foreach ($active->getAllCollectionNames() as $collection) {
-      $source_collection = $active->createCollection($collection);
-      $destination_collection = $storage->createCollection($collection);
-      // Delete everything in the collection sub-directory.
-      try {
-        $destination_collection->deleteAll();
-      }
-      catch (\UnexpectedValueException $exception) {
-        // Deleting a non-existing folder for collections might fail.
-      }
-
-      foreach ($source_collection->listAll() as $name) {
-        $destination_collection->write($name, $source_collection->read($name));
-      }
-
-    }
-
+    // Export by using the trait from core.
+    static::replaceStorageContents($active, $storage);
   }
 
   /**
