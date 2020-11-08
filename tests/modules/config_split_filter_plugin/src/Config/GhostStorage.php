@@ -1,9 +1,8 @@
 <?php
 
-namespace Drupal\config_split\Config;
+namespace Drupal\config_split_filter_plugin\Config;
 
-use Drupal\config_filter\Config\ReadOnlyStorage;
-use Drupal\Core\Config\StorageInterface;
+use Drupal\Core\Config\ReadOnlyStorage;
 
 /**
  * Class GhostStorage.
@@ -11,10 +10,8 @@ use Drupal\Core\Config\StorageInterface;
  * A GhostStorage acts like the normal Storage it wraps. All reading operations
  * return the values of the decorated storage but write operations are silently
  * ignored and the ghost pretends that the operation was successful.
- *
- * @package Drupal\config_split\Config
  */
-class GhostStorage extends ReadOnlyStorage implements StorageInterface {
+class GhostStorage extends ReadOnlyStorage {
 
   /**
    * {@inheritdoc}

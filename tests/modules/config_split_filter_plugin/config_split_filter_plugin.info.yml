@@ -1,0 +1,8 @@
+name: Config Split 1.x
+type: module
+description: Config Split as it used to be.
+core_version_requirement: ^8.8 || ^9
+package: Testing
+dependencies:
+  - config_filter:config_filter
+  - config_split:config_split

@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\config_split\Plugin\ConfigFilter;
+namespace Drupal\config_split_filter_plugin\Plugin\ConfigFilter;
 
 use Drupal\Component\Plugin\Derivative\DeriverBase;
 use Drupal\Core\Config\ConfigFactoryInterface;
@@ -11,7 +11,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * Provides block plugin definitions for custom menus.
  *
- * @see \Drupal\config_split\Plugin\ConfigFilter\SplitFilter
+ * @see \Drupal\config_split_filter_plugin\Plugin\ConfigFilter\SplitFilter
  */
 class SplitFilterDeriver extends DeriverBase implements ContainerDeriverInterface {
 

@@ -1,8 +1,8 @@
 <?php
 
-namespace Drupal\config_split\Tests;
+namespace Drupal\config_split_filter_plugin\Tests;
 
-use Drupal\config_split\Plugin\ConfigFilter\SplitFilter;
+use Drupal\config_split_filter_plugin\Plugin\ConfigFilter\SplitFilter;
 use Drupal\Core\Config\DatabaseStorage;
 use Drupal\Core\Config\FileStorage;
 use Drupal\Core\Config\NullStorage;
@@ -14,6 +14,8 @@ use Prophecy\Argument;
 
 /**
  * Test filter plugin.
+ *
+ * @group config_split
  */
 class SplitFilterTest extends UnitTestCase {
 
