@@ -24,7 +24,7 @@
     "source": "https://git.drupalcode.org/project/config_split"
   },
   "license": "GPL-2.0-or-later",
-  "require": {
+  "require-dev": {
     "drupal/config_filter": "^1||^2"
   },
   "conflict": {

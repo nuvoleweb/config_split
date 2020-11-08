@@ -1,8 +1,6 @@
-name: Configuration Split
+name: Config Split
 type: module
-description: Configuration filter for importing and exporting split config
+description: Configuration transformer for importing and exporting split config
 core_version_requirement: ^8.8 || ^9
 package: Config
 configure: entity.config_split.collection
-dependencies:
-  - config_filter:config_filter
