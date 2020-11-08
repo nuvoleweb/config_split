@@ -4,7 +4,7 @@ namespace Drupal\Tests\config_split\Kernel;
 
 use Drupal\config_filter\Config\FilteredStorage;
 use Drupal\config_split\Form\ConfigSplitEntityForm;
-use Drupal\config_split\Plugin\ConfigFilter\SplitFilter;
+use Drupal\config_split_filter_plugin\Plugin\ConfigFilter\SplitFilter;
 use Drupal\Core\Config\Config;
 use Drupal\Core\Config\FileStorage;
 use Drupal\Core\Site\Settings;
@@ -14,7 +14,7 @@ use org\bovigo\vfs\vfsStream;
 /**
  * Integration test.
  *
- * @group config_split
+ * @group config_split_1x
  */
 class ConfigSplitKernelTest extends KernelTestBase {
 
@@ -28,12 +28,13 @@ class ConfigSplitKernelTest extends KernelTestBase {
     'config_test',
     'config_filter',
     'config_split',
+    'config_split_filter_plugin',
   ];
 
   /**
    * {@inheritdoc}
    */
-  protected function setUp() {
+  protected function setUp(): void {
     parent::setUp();
     $this->installConfig(['config_test']);
   }

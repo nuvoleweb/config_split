@@ -2,8 +2,7 @@ services:
   config_split.cli:
     class: Drupal\config_split\ConfigSplitCliService
     arguments:
-      - "@plugin.manager.config_filter"
-      - "@config_filter.storage_factory"
+      - "@config_split.manager"
       - "@config.manager"
       - "@config.storage"
       - "@config.storage.sync"
@@ -15,3 +14,21 @@ services:
       - "@theme_handler"
       - "@string_translation"
       - "@extension.list.module"
+
+  config_split.manager:
+    class: Drupal\config_split\ConfigSplitManager
+    arguments:
+      - "@config.factory"
+      - "@config.manager"
+      - "@config.storage"
+      - "@config.storage.sync"
+      - "@config.storage.export"
+      - "@database"
+
+  config_split.event_subscriber:
+    class: Drupal\config_split\EventSubscriber\SplitImportExportSubscriber
+    arguments:
+      - "@config_split.manager"
+      - "@config.factory"
+    tags:
+      - { name: event_subscriber }

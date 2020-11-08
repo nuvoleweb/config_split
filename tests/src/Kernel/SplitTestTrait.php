@@ -78,10 +78,11 @@ trait SplitTestTrait {
    *   The storage.
    */
   protected function getSplitPreviewStorage(Config $config): StorageInterface {
+    $name = substr($config->getName(), strlen('config_split.config_split.'));
+    $storage = new DatabaseStorage($this->container->get('database'), 'config_split_preview_' . strtr($name, ['.' => '_']));
     // We cache it in its own memory storage so that it becomes decoupled.
     $memory = new MemoryStorage();
-    // For now just get the source, there is no preview yet.
-    $this->copyConfig($this->getSplitSourceStorage($config), $memory);
+    $this->copyConfig($storage, $memory);
     return $memory;
   }
 

@@ -16,7 +16,7 @@ use Drupal\Tests\config_filter\Kernel\ConfigStorageTestTrait;
  * on import and export that we expect. This is supposed to not go into internal
  * details of how config split achieves this.
  *
- * @group config_split_new
+ * @group config_split
  */
 class SplitMergeTest extends KernelTestBase {
 

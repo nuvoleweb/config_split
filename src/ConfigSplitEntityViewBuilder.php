@@ -12,18 +12,18 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class ConfigSplitEntityViewBuilder extends EntityViewBuilder {
 
   /**
-   * The plugin manager for config filter plugins.
+   * The split manager.
    *
-   * @var \Drupal\config_filter\Plugin\ConfigFilterPluginManager
+   * @var \Drupal\config_split\ConfigSplitManager
    */
-  protected $filterPluginManager;
+  protected $splitManager;
 
   /**
    * {@inheritdoc}
    */
   public static function createInstance(ContainerInterface $container, EntityTypeInterface $entity_type) {
     $handler = parent::createInstance($container, $entity_type);
-    $handler->filterPluginManager = $container->get('plugin.manager.config_filter');
+    $handler->splitManager = $container->get('config_split.manager');
     return $handler;
   }
 
@@ -34,9 +34,12 @@ class ConfigSplitEntityViewBuilder extends EntityViewBuilder {
     /** @var \Drupal\config_split\Entity\ConfigSplitEntityInterface[] $entities */
     $build = [];
 
+    /**
+     * @var string $entity_id
+     * @var \Drupal\config_split\Entity\ConfigSplitEntity $entity
+     */
     foreach ($entities as $entity_id => $entity) {
-      /** @var \Drupal\config_split\Plugin\ConfigFilter\SplitFilter $filter */
-      $filter = $this->filterPluginManager->getFilterInstance('config_split:' . $entity->id());
+      $config = $this->splitManager->getSplitConfig($entity->getConfigDependencyName());
 
       // @todo: make this prettier.
       $build[$entity_id] = [
@@ -49,7 +52,7 @@ class ConfigSplitEntityViewBuilder extends EntityViewBuilder {
           ],
           'items' => [
             '#theme' => 'item_list',
-            '#items' => $filter->getBlacklist(),
+            '#items' => $this->splitManager->calculateCompleteSplitList($config),
             '#list_type' => 'ul',
           ],
         ],
@@ -62,7 +65,7 @@ class ConfigSplitEntityViewBuilder extends EntityViewBuilder {
           ],
           'items' => [
             '#theme' => 'item_list',
-            '#items' => $filter->getGraylist(),
+            '#items' => $this->splitManager->calculateCondiionalSplitList($config),
             '#list_type' => 'ul',
           ],
         ],
