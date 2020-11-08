@@ -40,7 +40,8 @@ class ConfigSplitCommands extends DrushCommands {
    * @usage drush config-split:export development
    *   Export configuration of the "development" split
    *
-   * @aliases csex
+   * Propose and alias at:
+   *   https://www.drupal.org/project/config_split/issues/3181368
    */
   public function splitExport($split) {
     $this->cliService->ioExport($split, $this->io(), 'dt');
@@ -57,7 +58,8 @@ class ConfigSplitCommands extends DrushCommands {
    * @usage drush config-split:import development
    *   Import configuration of the "development" split
    *
-   * @aliases csim
+   * Propose and alias at:
+   *   https://www.drupal.org/project/config_split/issues/3181368
    */
   public function splitImport($split) {
     $this->cliService->ioImport($split, $this->io(), 'dt');
