@@ -2,6 +2,7 @@
 
 namespace Drupal\config_split\Commands;
 
+use Consolidation\AnnotatedCommand\CommandData;
 use Drupal\config_split\ConfigSplitCliService;
 use Drush\Commands\DrushCommands;
 
@@ -24,6 +25,7 @@ class ConfigSplitCommands extends DrushCommands {
    *   The CLI service which allows interoperability.
    */
   public function __construct(ConfigSplitCliService $cliService) {
+    parent::__construct();
     $this->cliService = $cliService;
   }
 
@@ -59,6 +61,18 @@ class ConfigSplitCommands extends DrushCommands {
    */
   public function splitImport($split) {
     $this->cliService->ioImport($split, $this->io(), 'dt');
+  }
+
+  /**
+   * React to the config export, write the splits to their storages.
+   *
+   * @hook post-command config:export
+   */
+  public function postConfigExport($result, CommandData $commandData) {
+    // The config export command aborts if it is not exporting.
+    // So here we know that the config was exported, so we need to also export
+    // the split config to where they need to be.
+    $this->cliService->postExportAll();
   }
 
 }

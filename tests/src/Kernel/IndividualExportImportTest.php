@@ -33,7 +33,6 @@ class IndividualExportImportTest extends KernelTestBase {
     'config',
     'config_test',
     'config_split',
-    'config_filter',
   ];
 
   /**
