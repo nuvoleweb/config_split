@@ -131,6 +131,9 @@ final class ConfigSplitManager {
     if ($split === NULL) {
       return;
     }
+    if (!$split->get('status')) {
+      return;
+    }
     $storage = $event->getStorage();
     $preview = $this->getPreviewStorage($split, $storage);
     if ($preview !== NULL) {
@@ -150,6 +153,9 @@ final class ConfigSplitManager {
   public function importTransform(string $name, StorageTransformEvent $event): void {
     $split = $this->getSplitConfig($name);
     if ($split === NULL) {
+      return;
+    }
+    if (!$split->get('status')) {
       return;
     }
     $storage = $event->getStorage();
