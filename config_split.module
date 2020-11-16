@@ -17,17 +17,13 @@ function config_split_form_config_admin_import_form_alter(&$form, FormStateInter
   $enabled = [];
   $used_config_split_text = t('You are not using any config split configuration');
   $config_split_entities = \Drupal::entityTypeManager()->getStorage('config_split')->loadMultiple();
-  $active_filters = \Drupal::service('plugin.manager.config_filter')->getDefinitions();
-  $active_filters = array_filter($active_filters, function ($filter) {
-    return $filter['status'];
-  });
-  /** @var \Drupal\config_split\Entity\ConfigSplitEntityInterface $config_split_entity */
-  foreach ($config_split_entities as $config_split_entity) {
-    if (in_array('config_split:' . $config_split_entity->id(), array_keys($active_filters))) {
-      $enabled[] = Link::fromTextAndUrl($config_split_entity->label(), $config_split_entity->toUrl())->toString();
+  /** @var \Drupal\config_split\Entity\ConfigSplitEntityInterface $entity */
+  foreach ($config_split_entities as $entity) {
+    if ($entity->status()) {
+      $enabled[] = Link::fromTextAndUrl($entity->label(), $entity->toUrl())->toString();
 
       // Read the configuration and check differences in important fields.
-      $config_name = $config_split_entity->getConfigDependencyName();
+      $config_name = $entity->getConfigDependencyName();
       $active = \Drupal::getContainer()->get('config.storage')->read($config_name);
       $staged = \Drupal::getContainer()->get('config.storage.sync')->read($config_name);
       $fields = ['status', 'weight', 'folder'];
@@ -36,7 +32,7 @@ function config_split_form_config_admin_import_form_alter(&$form, FormStateInter
       }, $fields));
       if ($warnings) {
         \Drupal::messenger()
-          ->addWarning(t('The configuration for @split has changed, consider a single import for it first.', ['@split' => $config_split_entity->label()]));
+          ->addWarning(t('The configuration for @split has changed, consider a single import for it first.', ['@split' => $entity->label()]));
       }
     }
   }

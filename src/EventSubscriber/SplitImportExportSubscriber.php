@@ -102,10 +102,12 @@ final class SplitImportExportSubscriber implements EventSubscriberInterface {
     // Runtime defined methods with the split in its name.
     if (substr($name, 0, strlen('_exportExplicit_')) === '_exportExplicit_') {
       $this->manager->exportTransform(substr($name, strlen('_exportExplicit_')), $arguments[0]);
+      return;
     }
 
     if (substr($name, 0, strlen('_importExplicit_')) === '_importExplicit_') {
       $this->manager->importTransform(substr($name, strlen('_importExplicit_')), $arguments[0]);
+      return;
     }
 
     throw new \BadMethodCallException("No method $name");
