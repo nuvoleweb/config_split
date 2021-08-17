@@ -4,19 +4,19 @@ docker-relay:
   version: 0.1.0
 
 drush:
-  container: drupal
+  container: php
   cmd: 'vendor/bin/drush'
   user: 1000
 
 composer:
-  container: drupal
+  container: php
   cmd: composer
   user: 1000
   # This is a hack and will be done differently in future versions of docker-relay.
-  exec: ['docker-compose', 'run', '--rm', '-u', '1000', 'drupal', 'composer']
+  exec: ['docker-compose', 'run', '--rm', '-u', '1000', 'php', 'composer']
 
 php:
-  container: drupal
+  container: php
   path: '.'
   cmd: php
   user: 1000

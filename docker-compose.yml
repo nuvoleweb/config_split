@@ -2,37 +2,54 @@ version: "3.1"
 
 services:
   # More info at https://github.com/wodby/php
-  drupal:
-    image: wodby/php:${PHP_TAG-7.3-dev}
-    command: composer webserver
+  php:
+    image: wodby/php:7.4-4.16.2
+    container_name: "config_split_php"
     environment:
       # We set the composer variable so that composer uses the dev file. The drupal CI can not deal with having drupal as a dev-dependency.
       COMPOSER: composer.dev.json
       PHP_SENDMAIL_PATH: /dev/null
-      COLUMNS: ${COLUMNS-80} # Set 80 columns for docker exec -it.
-      ## Read instructions at https://wodby.com/docs/stacks/drupal/local/#debugging-cli-requests
-      # The line below is commented out because the mere presence of that env variable loads XDebug regardless of the value.
-      # Enable XDebug when you `up` your container: PHP_XDEBUG=1 docker-compose up -d
-      # PHP_XDEBUG:
-      PHP_XDEBUG_DEFAULT_ENABLE:
-      PHP_IDE_CONFIG:
-      PHP_XDEBUG_REMOTE_HOST:
-      PHP_XDEBUG_REMOTE_CONNECT_BACK:
-      # Specify 'drupal' instead of 127.0.0.1 so that chrome service can reach it.
-      SIMPLETEST_BASE_URL: http://drupal:8888
-      SIMPLETEST_DB:
+      SIMPLETEST_BASE_URL: http://${PROJECT_BASE_URL-config_split.local}
+      SIMPLETEST_DB: 'mysql://drupal:drupal@mariadb/drupal'
+#      MINK_DRIVER_ARGS_WEBDRIVER: '["chrome", null, "http://selenium:4444/wd/hub"]'
+#      MINK_DRIVER_ARGS_WEBDRIVER: '["firefox", null, "http://selenium:4444/wd/hub"]'
+      PHP_FPM_USER: wodby
+      PHP_FPM_GROUP: wodby
+      PHP_OPCACHE_PRELOAD_USER: wodby
     volumes:
       - ./:/var/www/html:cached
       - ./.docker/zz-php.ini:/usr/local/etc/php/conf.d/zz-php.ini
-#    ports:
-#      - '${WEB_PORT-8889}:8888'
+
+  nginx:
+    image: wodby/nginx:1.19-5.10.5
+    container_name: "config_split_nginx"
+    depends_on:
+      - php
+    environment:
+      NGINX_STATIC_OPEN_FILE_CACHE: "off"
+      NGINX_ERROR_LOG_LEVEL: debug
+      NGINX_BACKEND_HOST: php
+      NGINX_SERVER_ROOT: /var/www/html/web
+      NGINX_VHOST_PRESET: drupal8
+    volumes:
+      - ./:/var/www/html:cached
+    labels:
+      - "traefik.http.routers.config_split_apache.rule=Host(`${PROJECT_BASE_URL-config_split.local}`)"
+    networks:
+      default:
+        aliases:
+          - ${PROJECT_BASE_URL-config_split.local}
 
   # More info at https://github.com/wodby/mariadb
   mariadb:
     image: wodby/mariadb:${MARIADB_TAG-10.3}
+    container_name: "config_split_mariadb"
     stop_grace_period: 30s
     environment:
       MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: drupal
+      MYSQL_USER: drupal
+      MYSQL_PASSWORD: drupal
 #    volumes:
 #      - mariadb-datavolume:/var/lib/mysql
 #    ports:
@@ -52,23 +69,22 @@ services:
 #      - '5532:5432'
 
   # https://gorannikolovski.com/blog/docker4drupal-and-functional-javascript-tests
-#  chrome:
-#    image: drupalci/webdriver-chromedriver:production
-#    ulimits:
-#      core:
-#        soft: -1
-#        hard: -1
-#    cap_add:
-#      - SYS_ADMIN
-#    volumes:
-#      - /dev/shm:/dev/shm
-#    entrypoint:
-#      - chromedriver
-#      - "--no-sandbox"
-#      - "--log-path=/tmp/chromedriver.log"
-#      - "--verbose"
-#      - "--whitelisted-ips="
-
+  chrome:
+    image: drupalci/webdriver-chromedriver:production
+    ulimits:
+      core:
+        soft: -1
+        hard: -1
+    cap_add:
+      - SYS_ADMIN
+    volumes:
+      - /dev/shm:/dev/shm
+    entrypoint:
+      - chromedriver
+      - "--no-sandbox"
+      - "--log-path=/tmp/chromedriver.log"
+      - "--verbose"
+      - "--whitelisted-ips="
 
   #data volumes https://docs.docker.com/storage/volumes/
 #volumes:

@@ -11,6 +11,7 @@ yarn.lock
 
 #PHPUnit output
 junit.xml
+phpunit.xml
 .phpunit.result.cache
 
 # Ignore local overrides.

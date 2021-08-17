@@ -22,7 +22,7 @@ class ScriptHandler {
     $cmd = "rm -rf web/modules/custom/$project_name && mkdir -p web/modules/custom/$project_name";
     $process = new Process($cmd);
     $process->mustRun();
-    $cmd = 'find ../../../.. -maxdepth 1 ! -name .git ! -name web ! -name vendor ! -name .idea -print | while read file; do ln -s "$file" .; done';
+    $cmd = 'find ../../../.. -maxdepth 1 ! -name .git ! -name web ! -name vendor ! -name .docker ! -name .spoons ! -name .idea -print | while read file; do ln -s "$file" .; done';
     $process = new Process($cmd, "web/modules/custom/$project_name");
     $process->mustRun();
   }
