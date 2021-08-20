@@ -41,7 +41,7 @@ class ConfigSplitEntityViewBuilder extends EntityViewBuilder {
     foreach ($entities as $entity_id => $entity) {
       $config = $this->splitManager->getSplitConfig($entity->getConfigDependencyName());
 
-      // @todo: make this prettier.
+      // @todo make this prettier.
       $build[$entity_id] = [
         'complete' => [
           '#type' => 'container',
@@ -65,7 +65,7 @@ class ConfigSplitEntityViewBuilder extends EntityViewBuilder {
           ],
           'items' => [
             '#theme' => 'item_list',
-            '#items' => $this->splitManager->calculateCondiionalSplitList($config),
+            '#items' => $this->splitManager->calculatePartialSplitList($config),
             '#list_type' => 'ul',
           ],
         ],

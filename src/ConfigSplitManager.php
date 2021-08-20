@@ -204,9 +204,9 @@ final class ConfigSplitManager {
     $transforming = $transforming->createCollection(StorageInterface::DEFAULT_COLLECTION);
     $splitStorage = $splitStorage->createCollection(StorageInterface::DEFAULT_COLLECTION);
 
-    // @todo: Fix this.
+    // @todo Fix this.
     $complete_split_list = $this->calculateCompleteSplitList($config);
-    $conditional_split_list = $this->calculateCondiionalSplitList($config);
+    $partial_split_list = $this->calculatePartialSplitList($config);
 
     // Split the configuration that needs to be split.
     foreach (array_merge([StorageInterface::DEFAULT_COLLECTION], $transforming->getAllCollectionNames()) as $collection) {
@@ -227,11 +227,10 @@ final class ConfigSplitManager {
           // Remove it from the transforming storage.
           $storage->delete($name);
         }
-        if (in_array($name, $conditional_split_list)) {
+        elseif (in_array($name, $partial_split_list)) {
           $syncData = $sync->read($name);
-          if (!$config->get('graylist_skip_equal') || $syncData !== $data) {
-            // The configuration is in the graylist but skip-equal is not set or
-            // the source does not have the same data, so write to secondary and
+          if ($syncData !== $data) {
+            // The source does not have the same data, so write to secondary and
             // return source data or null if it doesn't exist in the source.
             $split->write($name, $data);
 
@@ -392,7 +391,7 @@ final class ConfigSplitManager {
     $preview = $this->getPreviewStorage($split, $this->export);
 
     if (!$split->get('status') && $preview !== NULL) {
-      // @todo: decide if splitting an inactive split is wise.
+      // @todo decide if splitting an inactive split is wise.
       $this->splitPreview($split, $this->export, $preview);
     }
 
@@ -490,25 +489,25 @@ final class ConfigSplitManager {
    *   The list of config names.
    */
   public function calculateCompleteSplitList(ImmutableConfig $config) {
-    $blacklist = $config->get('blacklist');
+    $complete_list = $config->get('complete_list');
     $modules = array_keys($config->get('module'));
     if ($modules) {
-      $blacklist = array_merge($blacklist, array_keys($this->manager->findConfigEntityDependents('module', $modules)));
+      $complete_list = array_merge($complete_list, array_keys($this->manager->findConfigEntityDependents('module', $modules)));
     }
 
     $themes = array_keys($config->get('theme'));
     if ($themes) {
-      $blacklist = array_merge($blacklist, array_keys($this->manager->findConfigEntityDependents('theme', $themes)));
+      $complete_list = array_merge($complete_list, array_keys($this->manager->findConfigEntityDependents('theme', $themes)));
     }
 
     $extensions = array_merge([], $modules, $themes);
 
-    if (empty($blacklist) && empty($extensions)) {
+    if (empty($complete_list) && empty($extensions)) {
       // Early return to short-circuit the expensive calculations.
       return [];
     }
 
-    $blacklist = array_filter($this->manager->getConfigFactory()->listAll(), function ($name) use ($extensions, $blacklist) {
+    $complete_list = array_filter($this->manager->getConfigFactory()->listAll(), function ($name) use ($extensions, $complete_list) {
       // Filter the list of config objects since they are not included in
       // findConfigEntityDependents.
       foreach ($extensions as $extension) {
@@ -517,14 +516,14 @@ final class ConfigSplitManager {
         }
       }
 
-      // Add the config name to the blacklist if it is in the wildcard list.
-      return self::inFilterList($name, $blacklist);
+      // Add the config name to the complete_list if it is in the wildcard list.
+      return self::inFilterList($name, $complete_list);
     });
-    sort($blacklist);
-    // Finally merge all dependencies of the blacklisted config.
-    $blacklist = array_unique(array_merge($blacklist, array_keys($this->manager->findConfigEntityDependents('config', $blacklist))));
+    sort($complete_list);
+    // Finally merge all dependencies of the complete_listed config.
+    $complete_list = array_unique(array_merge($complete_list, array_keys($this->manager->findConfigEntityDependents('config', $complete_list))));
     // Exclude from the complete split what is conditionally split.
-    return array_diff($blacklist, $this->calculateCondiionalSplitList($config));
+    return $complete_list;
   }
 
   /**
@@ -536,26 +535,21 @@ final class ConfigSplitManager {
    * @return string[]
    *   The list of config names.
    */
-  public function calculateCondiionalSplitList(ImmutableConfig $config) {
-    $graylist = $config->get('graylist');
+  public function calculatePartialSplitList(ImmutableConfig $config) {
+    $partial_list = $config->get('partial_list');
 
-    if (empty($graylist)) {
+    if (empty($partial_list)) {
       // Early return to short-circuit the expensive calculations.
       return [];
     }
 
-    $graylist = array_filter($this->manager->getConfigFactory()->listAll(), function ($name) use ($graylist) {
-      // Add the config name to the graylist if it is in the wildcard list.
-      return self::inFilterList($name, $graylist);
+    $partial_list = array_filter($this->manager->getConfigFactory()->listAll(), function ($name) use ($partial_list) {
+      // Add the config name to the partial_list if it is in the wildcard list.
+      return self::inFilterList($name, $partial_list);
     });
-    sort($graylist);
+    sort($partial_list);
 
-    if ($config->get('graylist_dependents')) {
-      // Find dependent configuration and add it to the list.
-      $graylist = array_unique(array_merge($graylist, array_keys($this->manager->findConfigEntityDependents('config', $graylist))));
-    }
-
-    return $graylist;
+    return $partial_list;
   }
 
   /**

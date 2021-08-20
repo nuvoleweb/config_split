@@ -34,11 +34,9 @@ trait SplitTestTrait {
       'folder' => '',
       'module' => [],
       'theme' => [],
-      'blacklist' => [],
-      'graylist' => [],
+      'complete_list' => [],
+      'partial_list' => [],
       'status' => TRUE,
-      'graylist_dependents' => TRUE,
-      'graylist_skip_equal' => TRUE,
       'weight' => 0,
     ];
     // Set the id from the name.

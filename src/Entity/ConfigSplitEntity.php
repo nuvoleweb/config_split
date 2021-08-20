@@ -3,7 +3,6 @@
 namespace Drupal\config_split\Entity;
 
 use Drupal\Core\Config\Entity\ConfigEntityBase;
-use Drupal\Core\Entity\EntityTypeInterface;
 
 /**
  * Defines the Configuration Split setting entity.
@@ -43,15 +42,14 @@ use Drupal\Core\Entity\EntityTypeInterface;
  *     "id",
  *     "label",
  *     "description",
+ *     "weight",
+ *     "status",
+ *     "storage",
  *     "folder",
  *     "module",
  *     "theme",
- *     "blacklist",
- *     "graylist",
- *     "graylist_dependents",
- *     "graylist_skip_equal",
- *     "weight",
- *     "status",
+ *     "complete_list",
+ *     "partial_list",
  *   }
  * )
  */
@@ -79,6 +77,27 @@ class ConfigSplitEntity extends ConfigEntityBase implements ConfigSplitEntityInt
   protected $description = '';
 
   /**
+   * The weight of the configuration for sorting.
+   *
+   * @var int
+   */
+  protected $weight = 0;
+
+  /**
+   * The status, whether to be used by default.
+   *
+   * @var bool
+   */
+  protected $status = TRUE;
+
+  /**
+   * The split storage.
+   *
+   * @var string
+   */
+  protected $storage;
+
+  /**
    * The folder to export to.
    *
    * @var string
@@ -100,45 +119,17 @@ class ConfigSplitEntity extends ConfigEntityBase implements ConfigSplitEntityInt
   protected $theme = [];
 
   /**
-   * The explicit configuration to filter out.
+   * The configuration to explicitly filter out.
    *
    * @var string[]
    */
-  protected $blacklist = [];
+  protected $complete_list = [];
 
   /**
-   * The configuration to ignore.
+   * The configuration to partially split.
    *
    * @var string[]
    */
-  protected $graylist = [];
-
-  /**
-   * Include the graylist dependents flag.
-   *
-   * @var bool
-   */
-  protected $graylist_dependents = TRUE;
-
-  /**
-   * Skip graylisted config without a change flag.
-   *
-   * @var bool
-   */
-  protected $graylist_skip_equal = TRUE;
-
-  /**
-   * The weight of the configuration when splitting several folders.
-   *
-   * @var int
-   */
-  protected $weight = 0;
-
-  /**
-   * The status, whether to be used by default.
-   *
-   * @var bool
-   */
-  protected $status = TRUE;
+  protected $partial_list = [];
 
 }

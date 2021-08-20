@@ -79,7 +79,7 @@ class ConfigSplitEntityForm extends EntityForm {
     $form['static_fieldset'] = [
       '#type' => 'fieldset',
       '#title' => $this->t('Static Settings'),
-      '#description' => $this->t("These settings need a cache clear when overridden in settings.php and the split needs to be single imported before the config import for new values to take effect."),
+      '#description' => $this->t("These settings can be overridden in settings.php"),
     ];
     $form['static_fieldset']['description'] = [
       '#type' => 'textarea',
@@ -87,11 +87,29 @@ class ConfigSplitEntityForm extends EntityForm {
       '#description' => $this->t('Describe this config split setting. The text will be displayed on the <em>Configuration Split setting</em> list page.'),
       '#default_value' => $config->get('description'),
     ];
+    $form['static_fieldset']['storage'] = [
+      '#type' => 'radios',
+      '#title' => $this->t('Storage'),
+      '#description' => $this->t('Select where you would like the split to be stored.<br /><em>Folder:</em> A specified directory on its own. Select this option if you want to decide the placement of your configuration directories.<br /><em>Database:</em> A dedicated table in the database. Select this option if the split should not be shared (it will be included in database dumps).'),
+      '#default_value' => $config->get('storage') ?? 'folder',
+      '#options' => [
+        'folder' => $this->t('Folder'),
+        'database' => $this->t('Database'),
+      ],
+    ];
     $form['static_fieldset']['folder'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Folder'),
-      '#description' => $this->t('The directory, relative to the Drupal root, to which to save the filtered config. Recommended is a sibling directory of what you defined in <code>$config_directories[CONFIG_SYNC_DIRECTORY]</code> in settings.php, for more information consult the README.<br/>Configuration related to the "filtered" items below will be split from the main configuration and exported to this folder.<br/>Leave the folder empty to use a special database storage if you do not want to share the configuration.'),
+      '#description' => $this->t('The directory, relative to the Drupal root, in which to save the filtered config. This is typically a sibling directory of what you defined as <code>$settings["config_sync_directory"]</code> in settings.php, for more information consult the README.<br/>Configuration related to the "filtered" items below will be split from the main configuration and exported to this folder.'),
       '#default_value' => $config->get('folder'),
+      '#states' => [
+        'visible' => [
+          ':input[name="storage"]' => ['value' => 'folder'],
+        ],
+        'required' => [
+          ':input[name="storage"]' => ['value' => 'folder'],
+        ],
+      ],
     ];
     $form['static_fieldset']['weight'] = [
       '#type' => 'number',
@@ -106,7 +124,7 @@ class ConfigSplitEntityForm extends EntityForm {
       '#default_value' => ($config->get('status') ? TRUE : FALSE),
     ];
 
-    $form['blacklist_fieldset'] = [
+    $form['complete_fieldset'] = [
       '#type' => 'fieldset',
       '#title' => $this->t('Complete Split'),
       '#description' => $this->t("<em>Complete Split:</em>
@@ -133,7 +151,7 @@ class ConfigSplitEntityForm extends EntityForm {
       $form['#attached']['library'][] = 'config_split/config-split-form';
     }
 
-    $form['blacklist_fieldset']['module'] = [
+    $form['complete_fieldset']['module'] = [
       '#type' => $multiselect_type,
       '#title' => $this->t('Modules'),
       '#description' => $this->t('Select modules to split. Configuration depending on the modules is automatically split off completely as well.'),
@@ -148,7 +166,7 @@ class ConfigSplitEntityForm extends EntityForm {
     $themes = array_map(function ($theme) use ($theme_handler) {
       return $theme_handler->getName($theme->getName());
     }, $theme_handler->listInfo());
-    $form['blacklist_fieldset']['theme'] = [
+    $form['complete_fieldset']['theme'] = [
       '#type' => $multiselect_type,
       '#title' => $this->t('Themes'),
       '#description' => $this->t('Select themes to split.'),
@@ -158,28 +176,28 @@ class ConfigSplitEntityForm extends EntityForm {
       '#default_value' => array_keys($config->get('theme')),
     ];
     // At this stage we do not support themes. @TODO: support themes.
-    $form['blacklist_fieldset']['theme']['#access'] = FALSE;
+    $form['complete_fieldset']['theme']['#access'] = FALSE;
 
     $options = array_combine($this->configFactory()->listAll(), $this->configFactory()->listAll());
 
-    $form['blacklist_fieldset']['blacklist_picker'] = [
+    $form['complete_fieldset']['complete_picker'] = [
       '#type' => $multiselect_type,
       '#title' => $this->t('Configuration items'),
       '#description' => $this->t('Select configuration to split. Configuration depending on split modules does not need to be selected here specifically.'),
       '#options' => $options,
       '#size' => 20,
       '#multiple' => TRUE,
-      '#default_value' => array_intersect($config->get('blacklist'), array_keys($options)),
+      '#default_value' => array_intersect($config->get('complete_list'), array_keys($options)),
     ];
-    $form['blacklist_fieldset']['blacklist_text'] = [
+    $form['complete_fieldset']['complete_text'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Additional configuration'),
       '#description' => $this->t('Select additional configuration to split. One configuration key per line. You can use wildcards.'),
       '#size' => 5,
-      '#default_value' => implode("\n", array_diff($config->get('blacklist'), array_keys($options))),
+      '#default_value' => implode("\n", array_diff($config->get('complete_list'), array_keys($options))),
     ];
 
-    $form['graylist_fieldset'] = [
+    $form['partial_fieldset'] = [
       '#type' => 'fieldset',
       '#title' => $this->t('Conditional Split'),
       '#description' => $this->t("<em>Conditional Split:</em>
@@ -190,35 +208,21 @@ class ConfigSplitEntityForm extends EntityForm {
        should also remain in the main sync directory."),
     ];
 
-    $form['graylist_fieldset']['graylist_picker'] = [
+    $form['partial_fieldset']['partial_picker'] = [
       '#type' => $multiselect_type,
       '#title' => $this->t('Configuration items'),
       '#description' => $this->t('Select configuration to split conditionally.'),
       '#options' => $options,
       '#size' => 20,
       '#multiple' => TRUE,
-      '#default_value' => array_intersect($config->get('graylist'), array_keys($options)),
+      '#default_value' => array_intersect($config->get('partial_list'), array_keys($options)),
     ];
-    $form['graylist_fieldset']['graylist_text'] = [
+    $form['partial_fieldset']['partial_text'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Additional configuration'),
       '#description' => $this->t('Select additional configuration to conditionally split. One configuration key per line. You can use wildcards.'),
       '#size' => 5,
-      '#default_value' => implode("\n", array_diff($config->get('graylist'), array_keys($options))),
-    ];
-
-    $form['graylist_fieldset']['graylist_dependents'] = [
-      '#type' => 'checkbox',
-      '#title' => $this->t('Include dependent configuration'),
-      '#description' => $this->t('If this is set, conditionally split configuration will also include configuration that depends on it.'),
-      '#default_value' => ($config->get('graylist_dependents') ? TRUE : FALSE),
-    ];
-
-    $form['graylist_fieldset']['graylist_skip_equal'] = [
-      '#type' => 'checkbox',
-      '#title' => $this->t('Split only when different'),
-      '#description' => $this->t('If this is set, conditionally split configuration will not be exported to the split directory if it is equal to the one in the main sync directory.'),
-      '#default_value' => ($config->get('graylist_skip_equal') ? TRUE : FALSE),
+      '#default_value' => implode("\n", array_diff($config->get('partial_list'), array_keys($options))),
     ];
 
     return $form;
@@ -251,16 +255,16 @@ class ConfigSplitEntityForm extends EntityForm {
     $themeSelection = $this->readValuesFromPicker($form_state->getValue('theme'));
     $form_state->setValue('theme', array_intersect_key($extensions->get('theme'), $themeSelection));
 
-    $blacklistSelection = $this->readValuesFromPicker($form_state->getValue('blacklist_picker'));
-    $form_state->setValue('blacklist', array_merge(
-      array_keys($blacklistSelection),
-      $this->filterConfigNames($form_state->getValue('blacklist_text'))
+    $complete_listSelection = $this->readValuesFromPicker($form_state->getValue('complete_picker'));
+    $form_state->setValue('complete_list', array_merge(
+      array_keys($complete_listSelection),
+      $this->filterConfigNames($form_state->getValue('complete_text'))
     ));
 
-    $graylistSelection = $this->readValuesFromPicker($form_state->getValue('graylist_picker'));
-    $form_state->setValue('graylist', array_merge(
-      array_keys($graylistSelection),
-      $this->filterConfigNames($form_state->getValue('graylist_text'))
+    $partial_listSelection = $this->readValuesFromPicker($form_state->getValue('partial_picker'));
+    $form_state->setValue('partial_list', array_merge(
+      array_keys($partial_listSelection),
+      $this->filterConfigNames($form_state->getValue('partial_text'))
     ));
 
     parent::submitForm($form, $form_state);

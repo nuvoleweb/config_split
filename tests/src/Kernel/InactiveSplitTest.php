@@ -3,10 +3,7 @@
 namespace Drupal\Tests\config_split\Kernel;
 
 use Drupal\Core\Config\MemoryStorage;
-use Drupal\Core\Config\StorageInterface;
-use Drupal\Core\Site\Settings;
 use Drupal\KernelTests\KernelTestBase;
-use Drupal\language\Entity\ConfigurableLanguage;
 use Drupal\Tests\config_filter\Kernel\ConfigStorageTestTrait;
 
 /**
@@ -39,17 +36,17 @@ class InactiveSplitTest extends KernelTestBase {
   }
 
   /**
-   * Test
+   * Test.
    */
   public function testActiveInactive() {
     // Simple split with default configuration.
     $account = $this->createSplitConfig('account', [
-      'blacklist' => ['system.menu.account'],
+      'complete_list' => ['system.menu.account'],
       'status' => TRUE,
     ]);
 
     $admin = $this->createSplitConfig('admin', [
-      'blacklist' => ['system.menu.admin'],
+      'complete_list' => ['system.menu.admin'],
       'status' => FALSE,
     ]);
 
