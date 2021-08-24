@@ -37,3 +37,8 @@ services:
     class: Drupal\config_split\Config\ConfigSorter
     arguments:
       - "@config.typed"
+
+  config_split.patch_merge:
+    class: Drupal\config_split\Config\ConfigPatchMerge
+    arguments:
+      - "@config_split.sorter"
