@@ -32,3 +32,8 @@ services:
       - "@config.factory"
     tags:
       - { name: event_subscriber }
+
+  config_split.sorter:
+    class: Drupal\config_split\Config\ConfigSorter
+    arguments:
+      - "@config.typed"
