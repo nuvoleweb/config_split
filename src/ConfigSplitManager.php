@@ -3,9 +3,12 @@
 namespace Drupal\config_split;
 
 use Drupal\Component\FileSecurity\FileSecurity;
+use Drupal\config_split\Config\ConfigPatch;
+use Drupal\config_split\Config\ConfigPatchMerge;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\ConfigManagerInterface;
 use Drupal\Core\Config\DatabaseStorage;
+use Drupal\Core\Config\Entity\ConfigEntityInterface;
 use Drupal\Core\Config\FileStorage;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Config\MemoryStorage;
@@ -23,6 +26,8 @@ use Drupal\Core\Database\Connection;
 final class ConfigSplitManager {
 
   use StorageCopyTrait;
+
+  const SPLIT_PARTIAL_PREFIX = 'config_split.patch.';
 
   /**
    * The config factory to load config.
@@ -67,6 +72,13 @@ final class ConfigSplitManager {
   private $manager;
 
   /**
+   * The config array sorter.
+   *
+   * @var \Drupal\config_split\Config\ConfigPatchMerge
+   */
+  private $patchMerge;
+
+  /**
    * ConfigSplitManager constructor.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $factory
@@ -81,6 +93,8 @@ final class ConfigSplitManager {
    *   The export config store.
    * @param \Drupal\Core\Database\Connection $connection
    *   The database connection.
+   * @param \Drupal\config_split\Config\ConfigPatchMerge $patchMerge
+   *   The patch-merge service.
    */
   public function __construct(
     ConfigFactoryInterface $factory,
@@ -88,7 +102,8 @@ final class ConfigSplitManager {
     StorageInterface $active,
     StorageInterface $sync,
     StorageInterface $export,
-    Connection $connection
+    Connection $connection,
+    ConfigPatchMerge $patchMerge
   ) {
     $this->factory = $factory;
     $this->sync = $sync;
@@ -96,6 +111,7 @@ final class ConfigSplitManager {
     $this->export = $export;
     $this->connection = $connection;
     $this->manager = $manager;
+    $this->patchMerge = $patchMerge;
   }
 
   /**
@@ -204,42 +220,117 @@ final class ConfigSplitManager {
     $transforming = $transforming->createCollection(StorageInterface::DEFAULT_COLLECTION);
     $splitStorage = $splitStorage->createCollection(StorageInterface::DEFAULT_COLLECTION);
 
-    // @todo Fix this.
-    $complete_split_list = $this->calculateCompleteSplitList($config);
-    $partial_split_list = $this->calculatePartialSplitList($config);
+    $modules = array_keys($config->get('module'));
+    $changes = $this->manager->getConfigEntitiesToChangeOnDependencyRemoval('module', $modules, FALSE);
 
-    // Split the configuration that needs to be split.
-    foreach (array_merge([StorageInterface::DEFAULT_COLLECTION], $transforming->getAllCollectionNames()) as $collection) {
-      $storage = $transforming->createCollection($collection);
-      $split = $splitStorage->createCollection($collection);
-      $sync = $this->sync->createCollection($collection);
-      foreach ($storage->listAll() as $name) {
-        $data = $storage->read($name);
-        if ($data === FALSE) {
-          continue;
+    $this->processEntitiesToChangeOnDependencyRemoval($changes, $transforming, $splitStorage);
+
+    $completelySplit = array_map(function (ConfigEntityInterface $entity) {
+      return $entity->getConfigDependencyName();
+    }, $changes['delete']);
+
+    // Process all simple config objects which implicitly depend on modules.
+    foreach ($modules as $module) {
+      $keys = $this->active->listAll($module . '.');
+      $keys = array_diff($keys, $completelySplit);
+      foreach ($keys as $name) {
+        $splitStorage->write($name, $this->active->read($name));
+        $transforming->delete($name);
+        $completelySplit[] = $name;
+      }
+    }
+
+    // Get explicitly split config.
+    $completeSplitList = $config->get('complete_list');
+    if (!empty($completeSplitList)) {
+      // For the complete split we use the active storage config. This way two
+      // splits can split the same config and both will have them. But also
+      // because we use the config manager service to get entities to change
+      // based on the modules which are configured to be split.
+      $completeList = array_filter($this->active->listAll(), function ($name) use ($completeSplitList) {
+        // Check for wildcards.
+        return self::inFilterList($name, $completeSplitList);
+      });
+      // Check what is not processed already.
+      $completeList = array_diff($completeList, $completelySplit);
+
+      // Process also the config being removed.
+      $changes = $this->manager->getConfigEntitiesToChangeOnDependencyRemoval('config', $completeList, FALSE);
+      $this->processEntitiesToChangeOnDependencyRemoval($changes, $transforming, $splitStorage);
+
+      // Split all the config which was specified but not processed yet.
+      $processed = array_map(function (ConfigEntityInterface $entity) {
+        return $entity->getConfigDependencyName();
+      }, $changes['delete']);
+      $unprocessed = array_diff($completeList, $processed);
+      foreach ($unprocessed as $name) {
+        $splitStorage->write($name, $this->active->read($name));
+        $transforming->delete($name);
+      }
+    }
+
+    // Split from collections what was split from the default collection.
+    if (!empty($completelySplit) || !empty($completeSplitList)) {
+      foreach ($this->active->getAllCollectionNames() as $collection) {
+        $storageCollection = $transforming->createCollection($collection);
+        $splitCollection = $splitStorage->createCollection($collection);
+        $activeCollection = $this->active->createCollection($collection);
+
+        $removeList = array_filter($activeCollection->listAll(), function ($name) use ($completeSplitList, $completelySplit) {
+          // Check for wildcards.
+          return in_array($name, $completelySplit) || self::inFilterList($name, $completeSplitList);
+        });
+        foreach ($removeList as $name) {
+          // Split collections.
+          $splitCollection->write($name, $activeCollection->read($name));
+          $storageCollection->delete($name);
         }
+      }
+    }
 
-        if (in_array($name, $complete_split_list)) {
-          if ($data) {
-            $split->write($name, $data);
-          }
+    // Process partial config.
+    $partialSplitList = $config->get('partial_list');
+    if (!empty($partialSplitList)) {
+      foreach (array_merge([StorageInterface::DEFAULT_COLLECTION], $transforming->getAllCollectionNames()) as $collection) {
+        $syncCollection = $this->sync->createCollection($collection);
+        $activeCollection = $this->active->createCollection($collection);
+        $storageCollection = $transforming->createCollection($collection);
+        $splitCollection = $splitStorage->createCollection($collection);
 
-          // Remove it from the transforming storage.
-          $storage->delete($name);
-        }
-        elseif (in_array($name, $partial_split_list)) {
-          $syncData = $sync->read($name);
-          if ($syncData !== $data) {
-            // The source does not have the same data, so write to secondary and
-            // return source data or null if it doesn't exist in the source.
-            $split->write($name, $data);
+        $partialList = array_filter($activeCollection->listAll(), function ($name) use ($partialSplitList, $completelySplit) {
+          // Check for wildcards. But skip config which is already split.
+          return !in_array($name, $completelySplit) && self::inFilterList($name, $partialSplitList);
+        });
 
-            // If it is in the sync config write that to transforming storage.
-            if ($syncData !== FALSE) {
-              $storage->write($name, $syncData);
+        foreach ($partialList as $name) {
+          if ($syncCollection->exists($name)) {
+            $sync = $syncCollection->read($name);
+            $active = $activeCollection->read($name);
+
+            // If the split storage already contains a patch for the config
+            // we need to apply it to the sync config so that the updated patch
+            // contains both changes. We don't want to undo removing of things
+            // that need to be removed due to a module which was split off.
+            if ($splitCollection->exists(self::SPLIT_PARTIAL_PREFIX . $name)) {
+              $patch = ConfigPatch::fromArray($splitCollection->read(self::SPLIT_PARTIAL_PREFIX . $name));
+              $sync = $this->patchMerge->mergePatch($sync, $patch, $name);
             }
-            else {
-              $storage->delete($name);
+
+            $diff = $this->patchMerge->createPatch($active, $sync);
+            // If the diff is empty then sync already contains the data.
+            if (!$diff->isEmpty()) {
+              $splitCollection->write(self::SPLIT_PARTIAL_PREFIX . $name, $diff->toArray());
+              $storageCollection->write($name, $sync);
+            }
+          }
+          else {
+            // Split the config completely if it was not in the sync storage.
+            $splitCollection->write($name, $activeCollection->read($name));
+            $storageCollection->delete($name);
+            if ($splitStorage->exists(self::SPLIT_PARTIAL_PREFIX . $name)) {
+              // We completely split the config if it doesn't exist in the sync
+              // storage, so we can also remove the patch if it exists.
+              $splitStorage->delete(self::SPLIT_PARTIAL_PREFIX . $name);
             }
           }
         }
@@ -277,10 +368,21 @@ final class ConfigSplitManager {
       $split = $splitStorage->createCollection($collection);
       $storage = $transforming->createCollection($collection);
       foreach ($split->listAll() as $name) {
-        // Merging for now means using the config from the split.
         $data = $split->read($name);
         if ($data !== FALSE) {
-          $storage->write($name, $data);
+          if (strpos($name, self::SPLIT_PARTIAL_PREFIX) === 0) {
+            $name = substr($name, strlen(self::SPLIT_PARTIAL_PREFIX));
+            $diff = ConfigPatch::fromArray($data);
+            if ($storage->exists($name)) {
+              // Skip patches for config that doesn't exist in the storage.
+              $data = $storage->read($name);
+              $data = $this->patchMerge->mergePatch($data, $diff->invert(), $name);
+              $storage->write($name, $data);
+            }
+          }
+          else {
+            $storage->write($name, $data);
+          }
         }
       }
     }
@@ -550,6 +652,45 @@ final class ConfigSplitManager {
     sort($partial_list);
 
     return $partial_list;
+  }
+
+  /**
+   * Process changes the config manager calculated into the storages.
+   *
+   * @param array $changes
+   *   The changes from getConfigEntitiesToChangeOnDependencyRemoval().
+   * @param \Drupal\Core\Config\StorageInterface $storage
+   *   The primary config transformation storage.
+   * @param \Drupal\Core\Config\StorageInterface $split
+   *   The split storage.
+   */
+  protected function processEntitiesToChangeOnDependencyRemoval(array $changes, StorageInterface $storage, StorageInterface $split) {
+    // Process entities that need to be updated.
+    /** @var \Drupal\Core\Config\Entity\ConfigEntityInterface $entity */
+    foreach ($changes['update'] as $entity) {
+      $name = $entity->getConfigDependencyName();
+      // We use the active store because we also load the entity from it.
+      $original = $this->active->read($name);
+      $updated = $entity->toArray();
+
+      $diff = $this->patchMerge->createPatch($original, $updated);
+      if (!$diff->isEmpty()) {
+        $split->write(self::SPLIT_PARTIAL_PREFIX . $name, $diff->toArray());
+
+        $data = $storage->read($name);
+        $data = $this->patchMerge->mergePatch($data, $diff);
+
+        $storage->write($name, $data);
+      }
+    }
+
+    // Process entities that need to be deleted.
+    /** @var \Drupal\Core\Config\Entity\ConfigEntityInterface $entity */
+    foreach ($changes['delete'] as $entity) {
+      $name = $entity->getConfigDependencyName();
+      $split->write($name, $this->active->read($name));
+      $storage->delete($name);
+    }
   }
 
   /**

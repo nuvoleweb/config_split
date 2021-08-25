@@ -24,6 +24,7 @@ services:
       - "@config.storage.sync"
       - "@config.storage.export"
       - "@database"
+      - "@config_split.patch_merge"
 
   config_split.event_subscriber:
     class: Drupal\config_split\EventSubscriber\SplitImportExportSubscriber

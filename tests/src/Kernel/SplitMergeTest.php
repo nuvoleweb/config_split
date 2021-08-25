@@ -124,6 +124,10 @@ class SplitMergeTest extends KernelTestBase {
     // Change the gray listed config to see if it is exported the same.
     $originalSystem = $this->config('config_test.system')->getRawData();
     $this->config('config_test.system')->set('foo', 'baz')->save();
+    $systemPatch = [
+      'added' => ['foo' => 'bar'],
+      'removed' => ['foo' => 'baz'],
+    ];
 
     $expectedExport = new MemoryStorage();
     $expectedSplit = new MemoryStorage();
@@ -141,11 +145,10 @@ class SplitMergeTest extends KernelTestBase {
         elseif ($name === 'config_test.system') {
           // We only changed the config in the default collection.
           if ($collection === StorageInterface::DEFAULT_COLLECTION) {
-            $expectedSplit->write($name, $data);
+            $expectedSplit->write('config_split.patch.' . $name, $systemPatch);
             $expectedExport->write($name, $originalSystem);
           }
           else {
-            // The option "skip equal" is false, write to export only.
             $expectedExport->write($name, $data);
           }
         }
@@ -160,11 +163,15 @@ class SplitMergeTest extends KernelTestBase {
 
     // Change the config.
     $config->set('complete_list', ['config_test.system'])->set('partial_list', [])->save();
+    $active = $this->getActiveStorage();
 
     // Update expectations.
     $expectedExport->write($config->getName(), $config->getRawData());
     $expectedExport->write('config_test.types', $active->read('config_test.types'));
     $expectedSplit->delete('config_test.types');
+    $expectedSplit->delete('config_split.patch.config_test.system');
+    $expectedExport->delete('config_test.system');
+    $expectedSplit->write('config_test.system', $active->read('config_test.system'));
     // Update multilingual expectations.
     foreach (array_merge($active->getAllCollectionNames(), [StorageInterface::DEFAULT_COLLECTION]) as $collection) {
       $active = $active->createCollection($collection);
