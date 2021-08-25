@@ -1,9 +1,9 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Drupal\Tests\config_split\Unit;
 
-use Drupal\config_split\Config\ConfigPatch;
 use Drupal\config_split\Config\ConfigPatchMerge;
 use Drupal\config_split\Config\ConfigSorter;
 use PHPUnit\Framework\TestCase;
@@ -15,40 +15,51 @@ use PHPUnit\Framework\TestCase;
  */
 class ConfigPatchTest extends TestCase {
 
+  /**
+   * The patch merge service under test.
+   *
+   * @var \Drupal\config_split\Config\ConfigPatchMerge
+   */
   protected $patchMerge;
 
-  public function setUp(): void{
+  /**
+   * {@inheritdoc}
+   */
+  public function setUp(): void {
     parent::setUp();
 
     $this->patchMerge = new ConfigPatchMerge($this->prophesize(ConfigSorter::class)->reveal());
   }
 
+  /**
+   * Test some simplified config patch and merge workflow.
+   */
   public function testSimpleMergeExample() {
     // This is a much simplified version of some config. We use the complete
     // split to split off the module 'a' but we also partially split the config.
     // This is the active config.
     $active = [
       'dependencies' => ['a', 'b'],
-      'something' => 'A'
+      'something' => 'A',
     ];
 
     // This is the config in the sync storage before changes were made.
     $sync = [
       'dependencies' => ['a', 'b'],
-      'something_else' => 'B'
+      'something_else' => 'B',
     ];
 
     // This is the config which was updated by removing 'a'.
     // The patch already created by the complete split would contain this.
     $updated = [
       'dependencies' => ['b'],
-      'something' => 'A'
+      'something' => 'A',
     ];
 
     // This is what we expect to be exported at then end.
     $expected = [
       'dependencies' => ['b'],
-      'something_else' => 'B'
+      'something_else' => 'B',
     ];
 
     // This is the patch which is already in the split storage.
