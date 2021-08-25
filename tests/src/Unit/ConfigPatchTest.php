@@ -60,13 +60,13 @@ class ConfigPatchTest extends TestCase {
     $patch2 = $this->patchMerge->createPatch($active, $fixed);
     // This is what we export.
     $export = $this->patchMerge->mergePatch($active, $patch2);
-    self::assertEqualsCanonicalizing($expected, $export);
+    self::assertEquals($expected, $export);
 
     // When doing the reverse we expect it to work again.
     $import = $this->patchMerge->mergePatch($sync, $patch2->invert());
-    self::assertEqualsCanonicalizing($active, $import);
+    self::assertEquals($active, $import);
     $import = $this->patchMerge->mergePatch($export, $patch2->invert());
-    self::assertEqualsCanonicalizing($active, $import);
+    self::assertEquals($active, $import);
   }
 
 }
