@@ -129,9 +129,10 @@ class ConfigSplitEntityForm extends EntityForm {
       '#title' => $this->t('Complete Split'),
       '#description' => $this->t("<em>Complete Split:</em>
        Configuration listed here will be removed from the sync directory and
-       saved in the split directory instead. Modules will be removed from
+       saved in the split storage instead. Modules will be removed from
        core.extension when exporting (and added back when importing with the
-       split enabled.)"),
+       split enabled.). Config dependencies are updated and their changes are
+       recorded in a config patch saved in in the split storage."),
     ];
 
     $module_handler = $this->moduleHandler;
@@ -199,11 +200,12 @@ class ConfigSplitEntityForm extends EntityForm {
 
     $form['partial_fieldset'] = [
       '#type' => 'fieldset',
-      '#title' => $this->t('Conditional Split'),
-      '#description' => $this->t("<em>Conditional Split:</em>
+      '#title' => $this->t('Partial Split'),
+      '#description' => $this->t("<em>Partial Split:</em>
        Configuration listed here will be left untouched in the main sync
-       directory. The <em>currently active</em> version will be exported to the
-       split directory.<br />
+       directory. The <em>currently active</em> version will be compared to the
+       config in the sync directory and what is different is saved to the split
+       storage as a config patch.<br />
        Use this for configuration that is different on your site but which
        should also remain in the main sync directory."),
     ];
@@ -211,7 +213,7 @@ class ConfigSplitEntityForm extends EntityForm {
     $form['partial_fieldset']['partial_picker'] = [
       '#type' => $multiselect_type,
       '#title' => $this->t('Configuration items'),
-      '#description' => $this->t('Select configuration to split conditionally.'),
+      '#description' => $this->t('Select configuration to split partially.'),
       '#options' => $options,
       '#size' => 20,
       '#multiple' => TRUE,
@@ -220,7 +222,7 @@ class ConfigSplitEntityForm extends EntityForm {
     $form['partial_fieldset']['partial_text'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Additional configuration'),
-      '#description' => $this->t('Select additional configuration to conditionally split. One configuration key per line. You can use wildcards.'),
+      '#description' => $this->t('Select additional configuration to partially split. One configuration key per line. You can use wildcards.'),
       '#size' => 5,
       '#default_value' => implode("\n", array_diff($config->get('partial_list'), array_keys($options))),
     ];
