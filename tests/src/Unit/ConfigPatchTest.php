@@ -8,6 +8,11 @@ use Drupal\config_split\Config\ConfigPatchMerge;
 use Drupal\config_split\Config\ConfigSorter;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Test patch creation and merging without sorting.
+ *
+ * @group config_split
+ */
 class ConfigPatchTest extends TestCase {
 
   protected $patchMerge;
