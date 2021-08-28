@@ -5,6 +5,7 @@ namespace Drupal\config_split;
 use Drupal\Component\FileSecurity\FileSecurity;
 use Drupal\config_split\Config\ConfigPatch;
 use Drupal\config_split\Config\ConfigPatchMerge;
+use Drupal\config_split\Config\SplitCollectionStorage;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\ConfigManagerInterface;
 use Drupal\Core\Config\DatabaseStorage;
@@ -387,6 +388,15 @@ final class ConfigSplitManager {
       }
     }
 
+    // When merging a split with the collection storage we delete all in it.
+    if ($config->get('storage') === 'collection') {
+      // We can not assume $splitStorage is grafted onto $transforming.
+      $collectionStorage = new SplitCollectionStorage($transforming, $config->get('id'));
+      foreach (array_merge([StorageInterface::DEFAULT_COLLECTION], $collectionStorage->getAllCollectionNames()) as $collection) {
+        $collectionStorage->createCollection($collection)->deleteAll();
+      }
+    }
+
     // Now special case the extensions.
     $extensions = $transforming->read('core.extension');
     if ($extensions === FALSE) {
@@ -428,17 +438,26 @@ final class ConfigSplitManager {
    *   The split storage.
    */
   protected function getSplitStorage(ImmutableConfig $config, StorageInterface $transforming = NULL): ?StorageInterface {
-    // Here we could determine to use relative paths etc.
-    if ($directory = $config->get('folder')) {
+    $storage = $config->get('storage');
+    if ('collection' === $storage) {
+      if ($transforming instanceof StorageInterface) {
+        return new SplitCollectionStorage($transforming, $config->get('id'));
+      }
+
+      return NULL;
+    }
+    if ('folder' === $storage) {
+      // Here we could determine to use relative paths etc.
+      $directory = $config->get('folder');
       if (!is_dir($directory)) {
         // If the directory doesn't exist, attempt to create it.
-        // This might have some negative consequences but we trust the user to
+        // This might have some negative consequences, but we trust the user to
         // have properly configured their site.
         /* @noinspection MkdirRaceConditionInspection */
         @mkdir($directory, 0777, TRUE);
       }
       // The following is roughly: file_save_htaccess($directory, TRUE, TRUE);
-      // But we can't use global drupal functions and we want to write the
+      // But we can't use global drupal functions, and we want to write the
       // .htaccess file to ensure the configuration is protected and the
       // directory not empty.
       if (file_exists($directory) && is_writable($directory)) {
@@ -472,7 +491,14 @@ final class ConfigSplitManager {
    * @return \Drupal\Core\Config\StorageInterface|null
    *   The preview storage.
    */
-  protected function getPreviewStorage(ImmutableConfig $config, StorageInterface $transforming = NULL): ?StorageInterface {
+  public function getPreviewStorage(ImmutableConfig $config, StorageInterface $transforming = NULL): ?StorageInterface {
+    if ('collection' === $config->get('storage')) {
+      if ($transforming instanceof StorageInterface) {
+        return new SplitCollectionStorage($transforming, $config->get('id'));
+      }
+
+      return NULL;
+    }
 
     $name = substr($config->getName(), strlen('config_split.config_split.'));
     $name = 'config_split_preview_' . strtr($name, ['.' => '_']);

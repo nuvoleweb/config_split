@@ -2,7 +2,9 @@
 
 namespace Drupal\Tests\config_split\Kernel;
 
+use Drupal\config_split\Config\SplitCollectionStorage;
 use Drupal\Core\Config\MemoryStorage;
+use Drupal\Core\Config\StorageCopyTrait;
 use Drupal\Core\Config\StorageInterface;
 use Drupal\Core\Site\Settings;
 use Drupal\KernelTests\KernelTestBase;
@@ -22,6 +24,7 @@ class SplitMergeTest extends KernelTestBase {
 
   use ConfigStorageTestTrait;
   use SplitTestTrait;
+  use StorageCopyTrait;
 
   /**
    * Modules to enable.
@@ -61,12 +64,23 @@ class SplitMergeTest extends KernelTestBase {
   }
 
   /**
-   * Test a simple export split.
+   * Data provider to test with all storages.
+   *
+   * @return \string[][]
    */
-  public function testSimpleSplitExport() {
+  public function storageAlternativesProvider(): array {
+    return [['folder'], ['collection'], ['database']];
+  }
+
+  /**
+   * Test a simple export split.
+   *
+   * @dataProvider storageAlternativesProvider
+   */
+  public function testSimpleSplitExport($storage) {
     // Simple split with default configuration.
     $config = $this->createSplitConfig('test_split', [
-      'folder' => Settings::get('file_public_path') . '/config/split',
+      'storage' => $storage,
       'module' => ['config_test' => 0],
     ]);
 
@@ -96,9 +110,14 @@ class SplitMergeTest extends KernelTestBase {
         }
       }
     }
+    if ($storage === 'collection') {
+      $temp = new SplitCollectionStorage($expectedExport, $config->get('id'));
+      self::replaceStorageContents($expectedSplit, $temp);
+    }
 
-    static::assertStorageEquals($expectedExport, $this->getExportStorage());
-    static::assertStorageEquals($expectedSplit, $this->getSplitPreviewStorage($config));
+    $export = $this->getExportStorage();
+    static::assertStorageEquals($expectedExport, $export);
+    static::assertStorageEquals($expectedSplit, $this->getSplitPreviewStorage($config, $export));
 
     // Write the export to the file system and assert the import to work.
     $this->copyConfig($expectedExport, $this->getSyncFileStorage());
@@ -108,11 +127,13 @@ class SplitMergeTest extends KernelTestBase {
 
   /**
    * Test complete and conditional split export.
+   *
+   * @dataProvider storageAlternativesProvider
    */
-  public function testCompleteAndConditionalSplitExport() {
+  public function testCompleteAndConditionalSplitExport($storage) {
 
     $config = $this->createSplitConfig('test_split', [
-      'folder' => Settings::get('file_public_path') . '/config/split',
+      'storage' => $storage,
       'complete_list' => ['config_test.types'],
       'partial_list' => ['config_test.system'],
     ]);
@@ -158,8 +179,14 @@ class SplitMergeTest extends KernelTestBase {
       }
     }
 
-    static::assertStorageEquals($expectedExport, $this->getExportStorage());
-    static::assertStorageEquals($expectedSplit, $this->getSplitPreviewStorage($config));
+    if ($storage === 'collection') {
+      $temp = new SplitCollectionStorage($expectedExport, $config->get('id'));
+      self::replaceStorageContents($expectedSplit, $temp);
+    }
+
+    $export = $this->getExportStorage();
+    static::assertStorageEquals($expectedExport, $export);
+    static::assertStorageEquals($expectedSplit, $this->getSplitPreviewStorage($config, $export));
 
     // Change the config.
     $config->set('complete_list', ['config_test.system'])->set('partial_list', [])->save();
@@ -181,9 +208,14 @@ class SplitMergeTest extends KernelTestBase {
       $expectedExport->delete('config_test.system');
       $expectedSplit->write('config_test.system', $active->read('config_test.system'));
     }
+    if ($storage === 'collection') {
+      $temp = new SplitCollectionStorage($expectedExport, $config->get('id'));
+      self::replaceStorageContents($expectedSplit, $temp);
+    }
 
-    static::assertStorageEquals($expectedExport, $this->getExportStorage());
-    static::assertStorageEquals($expectedSplit, $this->getSplitPreviewStorage($config));
+    $export = $this->getExportStorage();
+    static::assertStorageEquals($expectedExport, $export);
+    static::assertStorageEquals($expectedSplit, $this->getSplitPreviewStorage($config, $export));
 
     // Write the export to the file system and assert the import to work.
     $this->copyConfig($expectedExport, $this->getSyncFileStorage());
@@ -193,11 +225,13 @@ class SplitMergeTest extends KernelTestBase {
 
   /**
    * Test complete and conditional split export with modules.
+   *
+   * @dataProvider storageAlternativesProvider
    */
-  public function testConditionalSplitWithModuleConfig() {
+  public function testConditionalSplitWithModuleConfig($storage) {
 
     $config = $this->createSplitConfig('test_split', [
-      'folder' => Settings::get('file_public_path') . '/config/split',
+      'storage' => $storage,
       'module' => ['config_test' => 0],
       'partial_list' => ['config_test.system'],
     ]);
@@ -235,9 +269,14 @@ class SplitMergeTest extends KernelTestBase {
         }
       }
     }
+    if ($storage === 'collection') {
+      $temp = new SplitCollectionStorage($expectedExport, $config->get('id'));
+      self::replaceStorageContents($expectedSplit, $temp);
+    }
 
-    static::assertStorageEquals($expectedExport, $this->getExportStorage());
-    static::assertStorageEquals($expectedSplit, $this->getSplitPreviewStorage($config));
+    $export = $this->getExportStorage();
+    static::assertStorageEquals($expectedExport, $export);
+    static::assertStorageEquals($expectedSplit, $this->getSplitPreviewStorage($config, $export));
 
     // Write the export to the file system and assert the import to work.
     $this->copyConfig($expectedExport, $this->getSyncFileStorage());
@@ -247,9 +286,12 @@ class SplitMergeTest extends KernelTestBase {
 
   /**
    * Test that dependencies are split too.
+   *
+   * @dataProvider storageAlternativesProvider
    */
-  public function testIncludeDependency() {
+  public function testIncludeDependency($storage) {
     $config = $this->createSplitConfig('test_split', [
+      'storage' => $storage,
       'complete_list' => ['system.menu.exclude_test'],
     ]);
 
@@ -279,9 +321,14 @@ class SplitMergeTest extends KernelTestBase {
         }
       }
     }
+    if ($storage === 'collection') {
+      $temp = new SplitCollectionStorage($expectedExport, $config->get('id'));
+      self::replaceStorageContents($expectedSplit, $temp);
+    }
 
-    static::assertStorageEquals($expectedExport, $this->getExportStorage());
-    static::assertStorageEquals($expectedSplit, $this->getSplitPreviewStorage($config));
+    $export = $this->getExportStorage();
+    static::assertStorageEquals($expectedExport, $export);
+    static::assertStorageEquals($expectedSplit, $this->getSplitPreviewStorage($config, $export));
 
     // Write the export to the file system and assert the import to work.
     $this->copyConfig($expectedExport, $this->getSyncFileStorage());

@@ -106,10 +106,11 @@ class ConfigSplitEntityForm extends EntityForm {
     $form['static_fieldset']['storage'] = [
       '#type' => 'radios',
       '#title' => $this->t('Storage'),
-      '#description' => $this->t('Select where you would like the split to be stored.<br /><em>Folder:</em> A specified directory on its own. Select this option if you want to decide the placement of your configuration directories.<br /><em>Database:</em> A dedicated table in the database. Select this option if the split should not be shared (it will be included in database dumps).'),
+      '#description' => $this->t('Select where you would like the split to be stored.<br /><em>Folder:</em> A specified directory on its own. Select this option if you want to decide the placement of your configuration directories.<br /><em>Collection:</em> A collection inside of the sync storage. Select this option if you want splits to be part of the main config, including in zip archives.<br /><em>Database:</em> A dedicated table in the database. Select this option if the split should not be shared (it will be included in database dumps).'),
       '#default_value' => $config->get('storage') ?? 'folder',
       '#options' => [
         'folder' => $this->t('Folder'),
+        'collection' => $this->t('Collection'),
         'database' => $this->t('Database'),
       ],
     ];

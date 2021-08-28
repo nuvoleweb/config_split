@@ -3,6 +3,7 @@
 namespace Drupal\Tests\config_split\Kernel;
 
 use Drupal\Core\Config\MemoryStorage;
+use Drupal\Core\Config\NullStorage;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\Tests\config_filter\Kernel\ConfigStorageTestTrait;
 
@@ -66,9 +67,10 @@ class InactiveSplitTest extends KernelTestBase {
       }
     }
 
-    static::assertStorageEquals($expectedExport, $this->getExportStorage());
-    static::assertStorageEquals($expectedAccount, $this->getSplitPreviewStorage($account));
-    static::assertStorageEquals($expectedAdmin, $this->getSplitPreviewStorage($admin));
+    $export = $this->getExportStorage();
+    static::assertStorageEquals($expectedExport, $export);
+    static::assertStorageEquals($expectedAccount, $this->getSplitPreviewStorage($account, $export));
+    static::assertStorageEquals($expectedAdmin, $this->getSplitPreviewStorage($admin, $export));
 
     // Write the export to the file system and assert the import to work.
     $this->copyConfig($expectedExport, $this->getSyncFileStorage());
@@ -85,9 +87,10 @@ class InactiveSplitTest extends KernelTestBase {
     $expectedExport->delete('system.menu.admin');
     $expectedExport->write('system.menu.account', $active->read('system.menu.account'));
 
-    static::assertStorageEquals($expectedExport, $this->getExportStorage());
-    static::assertStorageEquals($expectedAdmin, $this->getSplitPreviewStorage($admin));
-    static::assertStorageEquals($expectedAccount, $this->getSplitPreviewStorage($account));
+    $export = $this->getExportStorage();
+    static::assertStorageEquals($expectedExport, $export);
+    static::assertStorageEquals($expectedAccount, $this->getSplitPreviewStorage($account, $export));
+    static::assertStorageEquals($expectedAdmin, $this->getSplitPreviewStorage($admin, $export));
 
     $expectedImport = new MemoryStorage();
     $this->copyConfig($active, $expectedImport);

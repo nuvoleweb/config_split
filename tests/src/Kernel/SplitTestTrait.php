@@ -2,11 +2,13 @@
 
 namespace Drupal\Tests\config_split\Kernel;
 
+use Drupal\config_split\Config\SplitCollectionStorage;
 use Drupal\Core\Config\Config;
 use Drupal\Core\Config\DatabaseStorage;
 use Drupal\Core\Config\FileStorage;
 use Drupal\Core\Config\MemoryStorage;
 use Drupal\Core\Config\StorageInterface;
+use Drupal\Core\Site\Settings;
 
 /**
  * Trait to facilitate creating split configurations.
@@ -31,13 +33,14 @@ trait SplitTestTrait {
     }
     // Add default values.
     $data += [
-      'folder' => '',
+      'storage' => (isset($data['folder']) && $data['folder'] != '') ? 'folder' :  'database',
+      'status' => TRUE,
+      'weight' => 0,
+      'folder' => (isset($data['storage']) && $data['storage'] == 'folder') ? Settings::get('file_public_path') . '/config/split' : '',
       'module' => [],
       'theme' => [],
       'complete_list' => [],
       'partial_list' => [],
-      'status' => TRUE,
-      'weight' => 0,
     ];
     // Set the id from the name.
     $data['id'] = substr($name, strlen('config_split.config_split.'));
@@ -58,12 +61,16 @@ trait SplitTestTrait {
    *   The storage.
    */
   protected function getSplitSourceStorage(Config $config): StorageInterface {
-    $directory = $config->get('folder');
-    if ($directory) {
-      return new FileStorage($directory);
+    switch ($config->get('storage')) {
+      case 'folder':
+        return new FileStorage($config->get('folder'));
+      case 'collection':
+        return new SplitCollectionStorage($this->getSyncFileStorage(), $config->get('id'));
+      case 'database':
+        // We don't escape the name, it is tests after all.
+        return new DatabaseStorage($this->container->get('database'), strtr($config->getName(), ['.' => '_']));
     }
-    // We don't escape the name, it is tests after all.
-    return new DatabaseStorage($this->container->get('database'), strtr($config->getName(), ['.' => '_']));
+    throw new \LogicException();
   }
 
   /**
@@ -71,11 +78,19 @@ trait SplitTestTrait {
    *
    * @param \Drupal\Core\Config\Config $config
    *   The split config.
+   * @param \Drupal\Core\Config\StorageInterface $export
+   *   The export storage to graft collection storages on.
    *
    * @return \Drupal\Core\Config\StorageInterface
    *   The storage.
    */
-  protected function getSplitPreviewStorage(Config $config): StorageInterface {
+  protected function getSplitPreviewStorage(Config $config, StorageInterface $export = NULL): StorageInterface {
+    if ('collection' === $config->get('storage'))  {
+      if ($export === NULL) {
+        throw new \InvalidArgumentException();
+      }
+      return new SplitCollectionStorage($export, $config->get('id'));
+    }
     $name = substr($config->getName(), strlen('config_split.config_split.'));
     $storage = new DatabaseStorage($this->container->get('database'), 'config_split_preview_' . strtr($name, ['.' => '_']));
     // We cache it in its own memory storage so that it becomes decoupled.
