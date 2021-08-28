@@ -6,7 +6,6 @@ use Drupal\config_split\Config\SplitCollectionStorage;
 use Drupal\Core\Config\MemoryStorage;
 use Drupal\Core\Config\StorageCopyTrait;
 use Drupal\Core\Config\StorageInterface;
-use Drupal\Core\Site\Settings;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\language\Entity\ConfigurableLanguage;
 use Drupal\Tests\config_filter\Kernel\ConfigStorageTestTrait;
@@ -67,6 +66,7 @@ class SplitMergeTest extends KernelTestBase {
    * Data provider to test with all storages.
    *
    * @return \string[][]
+   *   The different storage types.
    */
   public function storageAlternativesProvider(): array {
     return [['folder'], ['collection'], ['database']];

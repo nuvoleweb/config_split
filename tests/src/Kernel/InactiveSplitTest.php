@@ -3,7 +3,6 @@
 namespace Drupal\Tests\config_split\Kernel;
 
 use Drupal\Core\Config\MemoryStorage;
-use Drupal\Core\Config\NullStorage;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\Tests\config_filter\Kernel\ConfigStorageTestTrait;
 

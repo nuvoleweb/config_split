@@ -33,7 +33,7 @@ trait SplitTestTrait {
     }
     // Add default values.
     $data += [
-      'storage' => (isset($data['folder']) && $data['folder'] != '') ? 'folder' :  'database',
+      'storage' => (isset($data['folder']) && $data['folder'] != '') ? 'folder' : 'database',
       'status' => TRUE,
       'weight' => 0,
       'folder' => (isset($data['storage']) && $data['storage'] == 'folder') ? Settings::get('file_public_path') . '/config/split' : '',
@@ -64,8 +64,10 @@ trait SplitTestTrait {
     switch ($config->get('storage')) {
       case 'folder':
         return new FileStorage($config->get('folder'));
+
       case 'collection':
         return new SplitCollectionStorage($this->getSyncFileStorage(), $config->get('id'));
+
       case 'database':
         // We don't escape the name, it is tests after all.
         return new DatabaseStorage($this->container->get('database'), strtr($config->getName(), ['.' => '_']));
@@ -85,7 +87,7 @@ trait SplitTestTrait {
    *   The storage.
    */
   protected function getSplitPreviewStorage(Config $config, StorageInterface $export = NULL): StorageInterface {
-    if ('collection' === $config->get('storage'))  {
+    if ('collection' === $config->get('storage')) {
       if ($export === NULL) {
         throw new \InvalidArgumentException();
       }
