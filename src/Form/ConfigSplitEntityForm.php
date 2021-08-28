@@ -318,7 +318,7 @@ class ConfigSplitEntityForm extends EntityForm {
       'active' => TRUE,
       'inactive' => FALSE,
     ];
-    if (!isset($map[$statusOverride])) {
+    if (!array_key_exists($statusOverride, $map)) {
       return;
     }
     $statusOverride = $map[$statusOverride];
