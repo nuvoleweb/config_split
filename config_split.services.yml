@@ -43,3 +43,11 @@ services:
     class: Drupal\config_split\Config\ConfigPatchMerge
     arguments:
       - "@config_split.sorter"
+
+  config_split.status_override:
+    class: Drupal\config_split\Config\StatusOverride
+    arguments:
+      - "@state"
+      - "@cache_tags.invalidator"
+    tags:
+      - { name: config.factory.override, priority: 5 }

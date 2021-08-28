@@ -2,6 +2,7 @@
 
 namespace Drupal\config_split\Form;
 
+use Drupal\config_split\Config\StatusOverride;
 use Drupal\Core\Entity\EntityForm;
 use Drupal\Core\Extension\ThemeHandlerInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -13,6 +14,13 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * The entity form.
  */
 class ConfigSplitEntityForm extends EntityForm {
+
+  /**
+   * The split status override service.
+   *
+   * @var \Drupal\config_split\Config\StatusOverride
+   */
+  protected $statusOverride;
 
   /**
    * The drupal state.
@@ -31,12 +39,19 @@ class ConfigSplitEntityForm extends EntityForm {
   /**
    * Constructs a new class instance.
    *
+   * @param \Drupal\config_split\Config\StatusOverride $statusOverride
+   *   The split status override service.
    * @param \Drupal\Core\State\StateInterface $state
    *   The drupal state.
    * @param \Drupal\Core\Extension\ThemeHandlerInterface $themeHandler
    *   The theme handler.
    */
-  public function __construct(StateInterface $state, ThemeHandlerInterface $themeHandler) {
+  public function __construct(
+    StatusOverride $statusOverride,
+    StateInterface $state,
+    ThemeHandlerInterface $themeHandler
+  ) {
+    $this->statusOverride = $statusOverride;
     $this->state = $state;
     $this->themeHandler = $themeHandler;
   }
@@ -46,6 +61,7 @@ class ConfigSplitEntityForm extends EntityForm {
    */
   public static function create(ContainerInterface $container) {
     return new static(
+      $container->get('config_split.status_override'),
       $container->get('state'),
       $container->get('theme_handler')
     );
@@ -117,11 +133,36 @@ class ConfigSplitEntityForm extends EntityForm {
       '#description' => $this->t('The weight to order the splits.'),
       '#default_value' => $config->get('weight'),
     ];
-    $form['static_fieldset']['status'] = [
+
+    $form['static_fieldset']['status_fieldset'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Status'),
+      '#description' => $this->t('Changing the status does not affect the other active config. You need to activate or deactivate the split for that.'),
+    ];
+    $overrideExample = '$config["config_split.config_split.' . ($config->get('id') ?? 'example') . '"]["status"] = ' . ($config->get('status') ? 'FALSE' : 'TRUE') . ';';
+    $form['static_fieldset']['status_fieldset']['status'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Active'),
-      '#description' => $this->t('Active splits get used by default, this property can be overwritten like any other config entity in settings.php.'),
+      '#description' => $this->t('Active splits get used to split and merge when importing and exporting config, this property is likely what you want to override in settings.php, for example: <code>@example</code>', ['@example' => $overrideExample]),
       '#default_value' => ($config->get('status') ? TRUE : FALSE),
+    ];
+    $overrideDefault = $this->statusOverride->getSplitOverride((string) $config->id());
+    if ($overrideDefault === NULL) {
+      $overrideDefault = 'none';
+    }
+    else {
+      $overrideDefault = $overrideDefault ? 'active' : 'inactive';
+    }
+    $form['static_fieldset']['status_fieldset']['status_override'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Status override'),
+      '#default_value' => $overrideDefault,
+      '#options' => [
+        'none' => $this->t('None'),
+        'active' => $this->t('Active'),
+        'inactive' => $this->t('Inactive'),
+      ],
+      '#description' => $this->t('This setting will override the status of the split with a config override saved in the database (state). The config override from settings.php will override this and take precedence.'),
     ];
 
     $form['complete_fieldset'] = [
@@ -270,6 +311,21 @@ class ConfigSplitEntityForm extends EntityForm {
     ));
 
     parent::submitForm($form, $form_state);
+
+    $statusOverride = $form_state->getValue('status_override');
+    $map = [
+      'none' => NULL,
+      'active' => TRUE,
+      'inactive' => FALSE,
+    ];
+    if (!isset($map[$statusOverride])) {
+      return;
+    }
+    $statusOverride = $map[$statusOverride];
+    if ($statusOverride !== $this->statusOverride->getSplitOverride($this->entity->id())) {
+      // Only update the override if it changed.
+      $this->statusOverride->setSplitOverride($this->entity->id(), $statusOverride);
+    }
   }
 
   /**

@@ -2,6 +2,7 @@
 
 namespace Drupal\config_split;
 
+use Drupal\config_split\Config\StatusOverride;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\Entity\ConfigEntityListBuilder;
 use Drupal\Core\Entity\EntityInterface;
@@ -13,6 +14,13 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * Provides a listing of Configuration Split setting entities.
  */
 class ConfigSplitEntityListBuilder extends ConfigEntityListBuilder {
+
+  /**
+   * The status override service.
+   *
+   * @var \Drupal\config_split\Config\StatusOverride
+   */
+  protected $statusOverride;
 
   /**
    * The config factory that knows what is overwritten.
@@ -28,6 +36,7 @@ class ConfigSplitEntityListBuilder extends ConfigEntityListBuilder {
     return new static(
       $entity_type,
       $container->get('entity_type.manager')->getStorage($entity_type->id()),
+      $container->get('config_split.status_override'),
       $container->get('config.factory')
     );
   }
@@ -39,12 +48,15 @@ class ConfigSplitEntityListBuilder extends ConfigEntityListBuilder {
    *   The entity type definition.
    * @param \Drupal\Core\Entity\EntityStorageInterface $storage
    *   The entity storage class.
+   * @param \Drupal\config_split\Config\StatusOverride $statusOverride
+   *   The status override service.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The config factory.
    */
-  public function __construct(EntityTypeInterface $entity_type, EntityStorageInterface $storage, ConfigFactoryInterface $config_factory) {
+  public function __construct(EntityTypeInterface $entity_type, EntityStorageInterface $storage, StatusOverride $statusOverride, ConfigFactoryInterface $config_factory) {
     parent::__construct($entity_type, $storage);
     $this->configFactory = $config_factory;
+    $this->statusOverride = $statusOverride;
   }
 
   /**
@@ -54,7 +66,8 @@ class ConfigSplitEntityListBuilder extends ConfigEntityListBuilder {
     $header['label'] = $this->t('Configuration Split setting');
     $header['id'] = $this->t('Machine name');
     $header['description'] = $this->t('Description');
-    $header['status'] = $this->t('Status');
+    $header['current_status'] = $this->t('Current status');
+    $header['default_status'] = $this->t('Default status');
     return $header + parent::buildHeader();
   }
 
@@ -66,9 +79,14 @@ class ConfigSplitEntityListBuilder extends ConfigEntityListBuilder {
     $row['id'] = $entity->id();
     $config = $this->configFactory->get('config_split.config_split.' . $entity->id());
     $row['description'] = $config->get('description');
-    $row['status'] = $config->get('status') ? 'active' : 'inactive';
-    if ($config->get('status') != $entity->status()) {
-      $row['status'] .= ' (overwritten)';
+    $row['current_status'] = $config->get('status') ? 'active' : 'inactive';
+    $row['default_status'] = $entity->status() ? 'active' : 'inactive';
+
+    if ($this->statusOverride->getSettingsOverride($entity->id()) !== NULL) {
+      $row['current_status'] .= ' (settings.php)';
+    }
+    elseif ($this->statusOverride->getSplitOverride($entity->id()) !== NULL) {
+      $row['current_status'] .= ' (state)';
     }
 
     return $row + parent::buildRow($entity);
