@@ -2,8 +2,8 @@
 
 namespace Drupal\config_split\Config;
 
-use Drupal\Core\Config\Schema\Mapping;
 use Drupal\Core\Config\StorableConfigBase;
+use Drupal\Core\Config\StorageInterface;
 use Drupal\Core\Config\TypedConfigManagerInterface;
 
 /**
@@ -21,13 +21,23 @@ class ConfigSorter {
   protected $typedConfigManager;
 
   /**
+   * The active storage to help with the sorting.
+   *
+   * @var \Drupal\Core\Config\StorageInterface
+   */
+  protected $active;
+
+  /**
    * ConfigCaster constructor.
    *
    * @param \Drupal\Core\Config\TypedConfigManagerInterface $typedConfigManager
    *   The typed config manager to look up the schema.
+   * @param \Drupal\Core\Config\StorageInterface $active
+   *   The active storage to help with the sorting.
    */
-  public function __construct(TypedConfigManagerInterface $typedConfigManager) {
+  public function __construct(TypedConfigManagerInterface $typedConfigManager, StorageInterface $active) {
     $this->typedConfigManager = $typedConfigManager;
+    $this->active = $active;
   }
 
   /**
@@ -74,17 +84,6 @@ class ConfigSorter {
           foreach ($this->data as $key => $value) {
             $this->data[$key] = $this->castValue($key, $value);
           }
-
-          // Unfortunately the top level keys are not sorted yet.
-          // This will be fixed too with issue #2852557.
-          $schema = $this->getSchemaWrapper();
-          if ($schema instanceof Mapping && count($this->data) > 1) {
-            $mapping = $schema->getDataDefinition()['mapping'];
-            // Only sort the keys in $sorted.
-            $mapping = array_intersect_key($mapping, $this->data);
-            // Sort the array in $sorted using the mapping definition.
-            $this->data = array_replace($mapping, $this->data);
-          }
         }
         else {
           foreach ($this->data as $key => $value) {
@@ -124,7 +123,58 @@ class ConfigSorter {
     };
 
     // Sort the data using the core class we extended.
-    return $sorter->anonymousSort($name, $data);
+    $data = $sorter->anonymousSort($name, $data);
+
+    // Unfortunately Drupal core does not let one easily sort config.
+    // Only when entities are saved some order is assured, for config objects
+    // there is no sorting and both of these things can not easily be addressed.
+    // @see https://www.drupal.org/project/drupal/issues/3230826
+    if ($this->active->exists($name)) {
+      // Since we are only concerned about sorting to prevent unnecessary diffs
+      // we don't sort when the config doesn't exist in the active storage.
+      $data = $this->sortDeep($data, $this->active->read($name));
+    }
+
+    return $data;
+  }
+
+  /**
+   * Sort one array with the sorting order of another.
+   *
+   * @param array $config
+   *   The array to sort.
+   * @param array $model
+   *   The array to get the sorting order from.
+   *
+   * @return array
+   *   The sorted array.
+   */
+  protected function sortDeep(array $config, array $model): array {
+    if ($config === $model) {
+      // Shortcut.
+      return $config;
+    }
+    $sorted = [];
+    $common = array_intersect_key($model, $config);
+    $unique = array_diff_key($config, $model);
+    foreach ($common as $key => $modelValue) {
+      $value = $config[$key];
+      // We maybe need to differentiate between mappings and sequences, use the
+      // config schema and all. But as long as core doesn't give us any help we
+      // just sort in the most crude way to get the job done.
+      if (is_array($modelValue) && is_array($value) && !empty($value)) {
+        // Recurse into nested values.
+        $value = $this->sortDeep($value, $modelValue);
+      }
+      // Fill the $sorted array in the same order as the model.
+      $sorted[$key] = $value;
+    }
+    foreach ($unique as $key => $value) {
+      // The values that do not exist in the model do not need to be sorted.
+      $sorted[$key] = $value;
+    }
+
+    return $sorted;
   }
 
 }
