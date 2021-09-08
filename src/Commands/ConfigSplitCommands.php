@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\config_split\Commands;
 
 use Consolidation\AnnotatedCommand\CommandData;
@@ -40,11 +42,11 @@ class ConfigSplitCommands extends DrushCommands {
    * @usage drush config-split:export development
    *   Export configuration of the "development" split
    *
-   * Propose and alias at:
+   * Propose an alias at:
    *   https://www.drupal.org/project/config_split/issues/3181368
    */
   public function splitExport($split) {
-    $this->cliService->ioExport($split, $this->io(), 'dt');
+    return $this->cliService->ioExport($split, $this->io(), 'dt');
   }
 
   /**
@@ -58,11 +60,30 @@ class ConfigSplitCommands extends DrushCommands {
    * @usage drush config-split:import development
    *   Import configuration of the "development" split
    *
-   * Propose and alias at:
+   * Propose an alias at:
    *   https://www.drupal.org/project/config_split/issues/3181368
    */
   public function splitImport($split) {
-    $this->cliService->ioImport($split, $this->io(), 'dt');
+    return $this->cliService->ioImport($split, $this->io(), 'dt');
+  }
+
+  /**
+   * Override the status of a split via state.
+   *
+   * @param string $name
+   *   The split name.
+   * @param string|int|bool $status
+   *   One of: active|1|true| inactive|0|false| default||null|none.
+   *
+   * @command config-split:status-override
+   *
+   * @usage drush config-split:status-override development active
+   *   Set (or get without a status argument) the status config override.
+   *
+   * @aliases csso
+   */
+  public function statusConfigOverride(string $name, $status = '') {
+    $this->cliService->statusOverride($name, $status, $this->io(), 'dt');
   }
 
   /**

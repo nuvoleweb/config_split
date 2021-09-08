@@ -6,6 +6,7 @@ use Drupal\Component\FileSecurity\FileSecurity;
 use Drupal\config_split\Config\ConfigPatch;
 use Drupal\config_split\Config\ConfigPatchMerge;
 use Drupal\config_split\Config\SplitCollectionStorage;
+use Drupal\config_split\Entity\ConfigSplitEntity;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\ConfigManagerInterface;
 use Drupal\Core\Config\DatabaseStorage;
@@ -120,11 +121,13 @@ final class ConfigSplitManager {
    *
    * @param string $name
    *   The name of the split.
+   * @param \Drupal\Core\Config\StorageInterface $storage
+   *   The storage to get a split from if not the active one.
    *
    * @return \Drupal\Core\Config\ImmutableConfig|null
    *   The split config.
    */
-  public function getSplitConfig(string $name): ?ImmutableConfig {
+  public function getSplitConfig(string $name, StorageInterface $storage = NULL): ?ImmutableConfig {
     if (strpos($name, 'config_split.config_split.') !== 0) {
       $name = 'config_split.config_split.' . $name;
     }
@@ -186,7 +189,6 @@ final class ConfigSplitManager {
    * Make the split permanent by copying the preview to the split storage.
    */
   public function commitAll(): void {
-    /** @var \Drupal\Core\Config\ImmutableConfig[] $splits */
     $splits = $this->factory->loadMultiple($this->factory->listAll('config_split'));
 
     $splits = array_filter($splits, function (ImmutableConfig $config) {
@@ -198,7 +200,7 @@ final class ConfigSplitManager {
       $preview = $this->getPreviewStorage($split);
       $permanent = $this->getSplitStorage($split);
       if ($preview !== NULL && $permanent !== NULL) {
-        static::replaceStorageContents($preview, $permanent);
+        self::replaceStorageContents($preview, $permanent);
       }
     }
   }
@@ -507,12 +509,15 @@ final class ConfigSplitManager {
   }
 
   /**
-   * Export the config of a single split.
+   * Get the single export preview.
    *
    * @param \Drupal\Core\Config\ImmutableConfig $split
    *   The split config.
+   *
+   * @return \Drupal\Core\Config\StorageInterface
+   *   The single export preview.
    */
-  public function singleExport(ImmutableConfig $split) {
+  public function singleExportPreview(ImmutableConfig $split): StorageInterface {
 
     // Force the transformation.
     $this->export->listAll();
@@ -520,16 +525,32 @@ final class ConfigSplitManager {
 
     if (!$split->get('status') && $preview !== NULL) {
       // @todo decide if splitting an inactive split is wise.
-      $this->splitPreview($split, $this->export, $preview);
+      $transforming = new MemoryStorage();
+      self::replaceStorageContents($this->export, $transforming);
+      $this->splitPreview($split, $transforming, $preview);
     }
 
-    $permanent = $this->getSplitStorage($split, $this->sync);
-    if ($preview !== NULL && $permanent !== NULL) {
-      static::replaceStorageContents($preview, $permanent);
-    }
-    else {
+    if ($preview === NULL) {
       throw new \RuntimeException();
     }
+    return $preview;
+  }
+
+  /**
+   * Get the single export target.
+   *
+   * @param \Drupal\Core\Config\ImmutableConfig $split
+   *   The split config.
+   *
+   * @return \Drupal\Core\Config\StorageInterface
+   *   The single export target.
+   */
+  public function singleExportTarget(ImmutableConfig $split): StorageInterface {
+    $permanent = $this->getSplitStorage($split, $this->sync);
+    if ($permanent === NULL) {
+      throw new \RuntimeException();
+    }
+    return $permanent;
   }
 
   /**
@@ -545,23 +566,23 @@ final class ConfigSplitManager {
    */
   public function singleImport(ImmutableConfig $split, bool $activate): StorageInterface {
     $storage = $this->getSplitStorage($split, $this->sync);
-    if ($storage === NULL) {
-      throw new \RuntimeException();
-    }
+    return $this->singleImportOrActivate($split, $storage, $activate);
+  }
 
-    $transformation = new MemoryStorage();
-    static::replaceStorageContents($this->active, $transformation);
-
-    $this->mergeSplit($split, $transformation, $storage);
-
-    // Activate the split in the transformation so that the importer does it.
-    $config = $transformation->read($split->getName());
-    if ($activate && $config !== FALSE) {
-      $config['status'] = TRUE;
-      $transformation->write($split->getName(), $config);
-    }
-
-    return $transformation;
+  /**
+   * Import the config of a single split.
+   *
+   * @param \Drupal\Core\Config\ImmutableConfig $split
+   *   The split config.
+   * @param bool $activate
+   *   Whether to activate the split as well.
+   *
+   * @return \Drupal\Core\Config\StorageInterface
+   *   The storage to pass to a ConfigImporter to do the actual importing.
+   */
+  public function singleActivate(ImmutableConfig $split, bool $activate): StorageInterface {
+    $storage = $this->getSplitStorage($split, $this->active);
+    return $this->singleImportOrActivate($split, $storage, $activate);
   }
 
   /**
@@ -571,12 +592,14 @@ final class ConfigSplitManager {
    *   The split config.
    * @param bool $exportSplit
    *   Whether to export the split config first.
+   * @param bool $override
+   *   Allows the deactivation via override.
    *
    * @return \Drupal\Core\Config\StorageInterface
    *   The storage to pass to a ConfigImporter to do the config changes.
    */
-  public function singleDeactivate(ImmutableConfig $split, bool $exportSplit): StorageInterface {
-    if (!$split->get('status')) {
+  public function singleDeactivate(ImmutableConfig $split, bool $exportSplit = FALSE, $override = FALSE): StorageInterface {
+    if (!$split->get('status') && !$override) {
       throw new \InvalidArgumentException('Split is already not active.');
     }
 
@@ -599,8 +622,37 @@ final class ConfigSplitManager {
 
     // Deactivate the split in the transformation so that the importer does it.
     $config = $transformation->read($split->getName());
-    if ($config !== FALSE) {
+    if ($config !== FALSE && !$override) {
       $config['status'] = FALSE;
+      $transformation->write($split->getName(), $config);
+    }
+
+    return $transformation;
+  }
+
+  /**
+   * Importing and activating are almost the same.
+   *
+   * @param \Drupal\Core\Config\ImmutableConfig $split
+   *   The split.
+   * @param \Drupal\Core\Config\StorageInterface $storage
+   *   The storage.
+   * @param bool $activate
+   *   Whether to activate the split in the transformation.
+   *
+   * @return \Drupal\Core\Config\StorageInterface
+   *   The storage to pass to a ConfigImporter to do the config changes.
+   */
+  protected function singleImportOrActivate(ImmutableConfig $split, StorageInterface $storage, bool $activate): StorageInterface {
+    $transformation = new MemoryStorage();
+    static::replaceStorageContents($this->active, $transformation);
+
+    $this->mergeSplit($split, $transformation, $storage);
+
+    // Activate the split in the transformation so that the importer does it.
+    $config = $transformation->read($split->getName());
+    if ($activate && $config !== FALSE) {
+      $config['status'] = TRUE;
       $transformation->write($split->getName(), $config);
     }
 

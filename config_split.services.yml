@@ -3,17 +3,9 @@ services:
     class: Drupal\config_split\ConfigSplitCliService
     arguments:
       - "@config_split.manager"
-      - "@config.manager"
       - "@config.storage"
       - "@config.storage.sync"
-      - "@event_dispatcher"
-      - "@lock"
-      - "@config.typed"
-      - "@module_handler"
-      - "@module_installer"
-      - "@theme_handler"
-      - "@string_translation"
-      - "@extension.list.module"
+      - "@config_split.status_override"
 
   config_split.manager:
     class: Drupal\config_split\ConfigSplitManager
