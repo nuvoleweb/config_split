@@ -139,6 +139,29 @@ final class ConfigSplitManager {
   }
 
   /**
+   * Get a split entity.
+   *
+   * @param string $name
+   *   The split name.
+   *
+   * @return \Drupal\config_split\Entity\ConfigSplitEntity|null
+   *   The config entity.
+   */
+  public function getSplitEntity(string $name): ?ConfigSplitEntity {
+    $config = $this->getSplitConfig($name);
+    if ($config === NULL) {
+      return NULL;
+    }
+    $entity = $this->manager->loadConfigEntityByName($config->getName());
+    if ($entity instanceof ConfigSplitEntity) {
+      return $entity;
+    }
+    // Do we throw an exception? Do we return null?
+    // @todo find out in what legitimate case this could possibly happen.
+    throw new \RuntimeException('A split config does not load a split entity? something is very wrong.');
+  }
+
+  /**
    * Process the export of a split.
    *
    * @param string $name
