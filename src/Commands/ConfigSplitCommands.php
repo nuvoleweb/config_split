@@ -68,6 +68,24 @@ class ConfigSplitCommands extends DrushCommands {
   }
 
   /**
+   * Deactivate a config split.
+   *
+   * @param string $split
+   *   The split configuration to deactivate.
+   *
+   * @command config-split:deactivate
+   *
+   * @usage drush config-split:deactivate development
+   *   Deactivate configuration of the "development" split
+   *
+   * Propose an alias at:
+   *   https://www.drupal.org/project/config_split/issues/3181368
+   */
+  public function splitDeactivate($split) {
+    return $this->cliService->ioDeactivate($split, $this->io(), 'dt');
+  }
+
+  /**
    * Override the status of a split via state.
    *
    * @param string $name

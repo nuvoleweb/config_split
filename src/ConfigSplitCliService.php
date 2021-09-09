@@ -149,6 +149,33 @@ class ConfigSplitCliService {
   }
 
   /**
+   * Handle the deactivation interaction.
+   *
+   * @param string $split
+   *   The split name to deactivate.
+   * @param \Drush\Style\DrushStyle|object $io
+   *   The $io interface of the cli tool calling.
+   * @param callable $t
+   *   The translation function akin to t().
+   * @param bool $confirmed
+   *   Whether the import is already confirmed by the console input.
+   */
+  public function ioDeactivate(string $split, $io, callable $t, $confirmed = FALSE): bool {
+    $config = $this->getSplitFromArgument($split, $io, $t);
+    if ($config === NULL) {
+      return FALSE;
+    }
+
+    $message = $t('Deactivate the split config configuration?');
+    $storage = $this->manager->singleDeactivate($config, FALSE);
+
+    if ($confirmed || $io->confirm($message)) {
+      return $this->tryImport($storage, $io, $t);
+    }
+    return TRUE;
+  }
+
+  /**
    * The hook to invoke after having exported all config.
    */
   public function postExportAll() {
