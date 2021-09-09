@@ -2,6 +2,7 @@
 
 namespace Drupal\config_split;
 
+use Drupal\Core\Config\StorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Entity\EntityViewBuilder;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -43,39 +44,77 @@ class ConfigSplitEntityViewBuilder extends EntityViewBuilder {
 
       // @todo make this prettier.
       $build[$entity_id] = [
-        'complete' => [
-          '#type' => 'container',
-          'title' => [
-            '#type' => 'html_tag',
-            '#tag' => 'h3',
-            '#value' => $this->t('Complete Split Config'),
-          ],
-          'items' => [
-            '#theme' => 'item_list',
-            '#items' => $this->splitManager->calculateCompleteSplitList($config),
-            '#list_type' => 'ul',
-          ],
-        ],
-        'conditional' => [
-          '#type' => 'container',
-          'title' => [
-            '#type' => 'html_tag',
-            '#tag' => 'h3',
-            '#value' => $this->t('Conditional Split Config'),
-          ],
-          'items' => [
-            '#theme' => 'item_list',
-            '#items' => $this->splitManager->calculatePartialSplitList($config),
-            '#list_type' => 'ul',
-          ],
-        ],
         '#cache' => [
           'tags' => $entity->getCacheTags(),
         ],
       ];
+
+      try {
+        $storage = $this->splitManager->singleExportPreview($config);
+        $build[$entity_id]['preview'] = [
+          '#type' => 'container',
+          'title' => [
+            '#type' => 'html_tag',
+            '#tag' => 'h3',
+            '#value' => $this->t('Preview'),
+          ],
+          'items' => [
+            '#theme' => 'item_list',
+            '#items' => $this->listStorageContents($storage),
+            '#list_type' => 'ul',
+          ],
+        ];
+      }
+      catch (\Exception $exception) {
+        $build[$entity_id]['preview'] = [
+          '#markup' => $this->t('Can not display preview of %split', ['%split' => $entity->label()]),
+        ];
+      }
+
+      try {
+        $storage = $this->splitManager->singleExportTarget($config);
+        $build[$entity_id]['exported'] = [
+          '#type' => 'container',
+          'title' => [
+            '#type' => 'html_tag',
+            '#tag' => 'h3',
+            '#value' => $this->t('Exported'),
+          ],
+          'items' => [
+            '#theme' => 'item_list',
+            '#items' => $this->listStorageContents($storage),
+            '#list_type' => 'ul',
+          ],
+        ];
+      }
+      catch (\Exception $exception) {
+        $build[$entity_id]['exported'] = [
+          '#markup' => $this->t('Can not display export storage of %split', ['%split' => $entity->label()]),
+        ];
+      }
+
     }
 
     return $build;
+  }
+
+  /**
+   * List the contents of a storage.
+   *
+   * @param \Drupal\Core\Config\StorageInterface $storage
+   *   The storage.
+   *
+   * @return array
+   *   the contents.
+   */
+  protected function listStorageContents(StorageInterface $storage): array {
+    $list = $storage->createCollection(StorageInterface::DEFAULT_COLLECTION)->listAll();
+    foreach ($storage->getAllCollectionNames() as $collection) {
+      foreach ($storage->createCollection($collection)->listAll() as $name) {
+        $list[] = $collection . ':' . $name;
+      }
+    }
+    return $list;
   }
 
 }
