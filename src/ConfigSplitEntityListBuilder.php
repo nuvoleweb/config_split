@@ -98,6 +98,8 @@ class ConfigSplitEntityListBuilder extends ConfigEntityListBuilder {
   public function getDefaultOperations(EntityInterface $entity) {
     /** @var \Drupal\Core\Config\Entity\ConfigEntityInterface $entity */
     $operations = parent::getDefaultOperations($entity);
+
+    // Operations changing the entity.
     if (!$entity->get('status') && $entity->hasLinkTemplate('enable')) {
       $operations['enable'] = [
         'title' => $this->t('Enable'),
@@ -112,6 +114,62 @@ class ConfigSplitEntityListBuilder extends ConfigEntityListBuilder {
         'url' => $entity->toUrl('disable'),
       ];
     }
+
+    // Operations changing the site config.
+    $config = $this->configFactory->get('config_split.config_split.' . $entity->id());
+    $enforced = $this->statusOverride->getSettingsOverride($entity->id()) !== NULL;
+    if ($config->get('status')) {
+      if ($entity->hasLinkTemplate('import')) {
+        $operations['import'] = [
+          'title' => $this->t('Import'),
+          'weight' => 40,
+          'url' => $entity->toUrl('import'),
+        ];
+      }
+      if ($entity->hasLinkTemplate('export')) {
+        $operations['export'] = [
+          'title' => $this->t('Export'),
+          'weight' => 40,
+          'url' => $entity->toUrl('export'),
+        ];
+      }
+      if ($entity->hasLinkTemplate('deactivate') && !$enforced) {
+        $operations['deactivate'] = [
+          'title' => $this->t('Deactivate'),
+          'weight' => 40,
+          'url' => $entity->toUrl('deactivate'),
+        ];
+      }
+
+    }
+    else {
+      if ($entity->get('storage') === 'collection') {
+        if ($entity->hasLinkTemplate('activate') && !$enforced) {
+          $operations['activate'] = [
+            'title' => $this->t('Activate'),
+            'weight' => 40,
+            'url' => $entity->toUrl('activate'),
+          ];
+        }
+        if ($entity->hasLinkTemplate('import') && !$enforced) {
+          $operations['import'] = [
+            'title' => $this->t('Import'),
+            'weight' => 40,
+            'url' => $entity->toUrl('import'),
+          ];
+        }
+      }
+      else {
+        if ($entity->hasLinkTemplate('import') && !$enforced) {
+          $operations['import'] = [
+            'title' => $this->t('Activate/Import'),
+            'weight' => 40,
+            'url' => $entity->toUrl('import'),
+          ];
+        }
+      }
+    }
+
     return $operations;
   }
 

@@ -36,6 +36,10 @@ use Drupal\Core\Config\Entity\ConfigEntityBase;
  *     "delete-form" = "/admin/config/development/configuration/config-split/{config_split}/delete",
  *     "enable" = "/admin/config/development/configuration/config-split/{config_split}/enable",
  *     "disable" = "/admin/config/development/configuration/config-split/{config_split}/disable",
+ *     "activate" = "/admin/config/development/configuration/config-split/{config_split}/activate",
+ *     "deactivate" = "/admin/config/development/configuration/config-split/{config_split}/deactivate",
+ *     "import" = "/admin/config/development/configuration/config-split/{config_split}/import",
+ *     "export" = "/admin/config/development/configuration/config-split/{config_split}/export",
  *     "collection" = "/admin/config/development/configuration/config-split"
  *   },
  *   config_export = {
