@@ -22,6 +22,15 @@ entity.config_split.import:
   requirements:
     _custom_access: '\Drupal\config_split\Form\ConfigSplitImportForm::access'
 
+# Exporting the split writes the split config to the split storage.
+entity.config_split.export:
+  path: '/admin/config/development/configuration/config-split/{config_split}/export'
+  defaults:
+    _form: '\Drupal\config_split\Form\ConfigSplitExportForm'
+    _title: 'Export'
+  requirements:
+    _custom_access: '\Drupal\config_split\Form\ConfigSplitExportForm::access'
+
 # Diff path to see what is importing.
 config_split.diff:
   path: '/admin/config/development/configuration/config-split/{config_split}/{operation}/diff/{source_name}/{target_name}'
