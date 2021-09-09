@@ -197,7 +197,7 @@ class ConfigSplitEntityForm extends EntityForm {
     $form['complete_fieldset']['module'] = [
       '#type' => $multiselect_type,
       '#title' => $this->t('Modules'),
-      '#description' => $this->t('Select modules to split. Configuration depending on the modules is automatically split off completely as well.'),
+      '#description' => $this->t('Select modules to split. Configuration depending on the modules is changed as if the module would be uninstalled or automatically split off completely as well.'),
       '#options' => $modules,
       '#size' => 20,
       '#multiple' => TRUE,
@@ -299,15 +299,15 @@ class ConfigSplitEntityForm extends EntityForm {
     $themeSelection = $this->readValuesFromPicker($form_state->getValue('theme'));
     $form_state->setValue('theme', array_intersect_key($extensions->get('theme'), $themeSelection));
 
-    $complete_listSelection = $this->readValuesFromPicker($form_state->getValue('complete_picker'));
+    $selection = $this->readValuesFromPicker($form_state->getValue('complete_picker'));
     $form_state->setValue('complete_list', array_merge(
-      array_keys($complete_listSelection),
+      array_keys($selection),
       $this->filterConfigNames($form_state->getValue('complete_text'))
     ));
 
-    $partial_listSelection = $this->readValuesFromPicker($form_state->getValue('partial_picker'));
+    $selection = $this->readValuesFromPicker($form_state->getValue('partial_picker'));
     $form_state->setValue('partial_list', array_merge(
-      array_keys($partial_listSelection),
+      array_keys($selection),
       $this->filterConfigNames($form_state->getValue('partial_text'))
     ));
 
@@ -420,7 +420,7 @@ class ConfigSplitEntityForm extends EntityForm {
         ]));
     }
     $folder = $form_state->getValue('folder');
-    if (!empty($folder) && !file_exists($folder)) {
+    if ($form_state->getValue('storage') === 'folder' && !empty($folder) && !file_exists($folder)) {
       $this->messenger()->addWarning(
         $this->t('The storage path "%path" for %label Configuration Split setting does not exist. Make sure it exists and is writable.',
           [
@@ -430,6 +430,8 @@ class ConfigSplitEntityForm extends EntityForm {
         ));
     }
     $form_state->setRedirectUrl($config_split->toUrl('collection'));
+
+    return $status;
   }
 
   /**
