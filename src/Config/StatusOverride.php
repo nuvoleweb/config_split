@@ -134,7 +134,10 @@ class StatusOverride implements ConfigFactoryOverrideInterface {
   public function getCacheableMetadata($name) {
     $metadata = new CacheableMetadata();
     $metadata
-      ->setCacheTags([$this->getCacheSuffix() . ':' . $name])
+      ->setCacheTags([
+        $this->getCacheSuffix() . ':' . $name,
+        'config:' . $name,
+      ])
       ->setCacheMaxAge(Cache::PERMANENT);
     return $metadata;
   }
