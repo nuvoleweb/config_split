@@ -68,6 +68,24 @@ class ConfigSplitCommands extends DrushCommands {
   }
 
   /**
+   * Activate a config split.
+   *
+   * @param string $split
+   *   The split configuration to activate.
+   *
+   * @command config-split:activate
+   *
+   * @usage drush config-split:activate development
+   *   Activate configuration of the "development" split
+   *
+   * Propose an alias at:
+   *   https://www.drupal.org/project/config_split/issues/3181368
+   */
+  public function splitActivate($split) {
+    return $this->cliService->ioActivate($split, $this->io(), 'dt');
+  }
+
+  /**
    * Deactivate a config split.
    *
    * @param string $split

@@ -149,6 +149,33 @@ class ConfigSplitCliService {
   }
 
   /**
+   * Handle the activation interaction.
+   *
+   * @param string $split
+   *   The split name to activate.
+   * @param \Symfony\Component\Console\Style\StyleInterface|object $io
+   *   The $io interface of the cli tool calling.
+   * @param callable $t
+   *   The translation function akin to t().
+   * @param bool $confirmed
+   *   Whether the import is already confirmed by the console input.
+   */
+  public function ioActivate(string $split, $io, callable $t, $confirmed = FALSE): bool {
+    $config = $this->getSplitFromArgument($split, $io, $t);
+    if ($config === NULL) {
+      return FALSE;
+    }
+
+    $message = $t('Activate the split config configuration?');
+    $storage = $this->manager->singleActivate($config, TRUE);
+
+    if ($confirmed || $io->confirm($message)) {
+      return $this->tryImport($storage, $io, $t);
+    }
+    return TRUE;
+  }
+
+  /**
    * Handle the deactivation interaction.
    *
    * @param string $split
