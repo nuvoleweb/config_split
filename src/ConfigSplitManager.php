@@ -5,8 +5,10 @@ namespace Drupal\config_split;
 use Drupal\Component\FileSecurity\FileSecurity;
 use Drupal\config_split\Config\ConfigPatch;
 use Drupal\config_split\Config\ConfigPatchMerge;
+use Drupal\config_split\Config\EphemeralConfigFactory;
 use Drupal\config_split\Config\SplitCollectionStorage;
 use Drupal\config_split\Entity\ConfigSplitEntity;
+use Drupal\Core\Config\ConfigFactory;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\ConfigManagerInterface;
 use Drupal\Core\Config\DatabaseStorage;
@@ -131,11 +133,19 @@ final class ConfigSplitManager {
     if (strpos($name, 'config_split.config_split.') !== 0) {
       $name = 'config_split.config_split.' . $name;
     }
-    if (!in_array($name, $this->factory->listAll('config_split.config_split.'), TRUE)) {
-      return NULL;
+    // Get the split from the storage passed as an argument.
+    if ($storage instanceof StorageInterface && $this->factory instanceof ConfigFactory) {
+      $factory = EphemeralConfigFactory::fromService($this->factory, $storage);
+      if (in_array($name, $factory->listAll('config_split.config_split.'), TRUE)) {
+        return $factory->get($name);
+      }
+    }
+    // Use the config factory service as a fallback.
+    if (in_array($name, $this->factory->listAll('config_split.config_split.'), TRUE)) {
+      return $this->factory->get($name);
     }
 
-    return $this->factory->get($name);
+    return NULL;
   }
 
   /**
@@ -159,6 +169,46 @@ final class ConfigSplitManager {
     // Do we throw an exception? Do we return null?
     // @todo find out in what legitimate case this could possibly happen.
     throw new \RuntimeException('A split config does not load a split entity? something is very wrong.');
+  }
+
+  /**
+   * Get all splits from the active storage plus the given storage.
+   *
+   * @param \Drupal\Core\Config\StorageInterface|null $storage
+   *   The storage to consider when listing splits.
+   *
+   * @return string[]
+   *   The split names from the active storage and the given stoage.
+   */
+  public function listAll(StorageInterface $storage = NULL): array {
+    $names = [];
+    if ($storage instanceof StorageInterface && $this->factory instanceof ConfigFactory) {
+      $factory = EphemeralConfigFactory::fromService($this->factory, $storage);
+      $names = $factory->listAll('config_split.config_split.');
+    }
+
+    return array_unique(array_merge($names, $this->factory->listAll('config_split.config_split.')));
+  }
+
+  /**
+   * Load multiple splits and prefer loading it from the given storage.
+   *
+   * @param array $names
+   *   The names to load.
+   * @param \Drupal\Core\Config\StorageInterface|null $storage
+   *   The storage to check.
+   *
+   * @return \Drupal\Core\Config\ImmutableConfig[]
+   *   Loaded splits (with config overrides).
+   */
+  public function loadMultiple(array $names, StorageInterface $storage = NULL): array {
+    $configs = [];
+    if ($storage instanceof StorageInterface && $this->factory instanceof ConfigFactory) {
+      $factory = EphemeralConfigFactory::fromService($this->factory, $storage);
+      $configs = $factory->loadMultiple($names);
+    }
+
+    return $configs + $this->factory->loadMultiple($names);
   }
 
   /**
@@ -194,7 +244,7 @@ final class ConfigSplitManager {
    *   The transformation event.
    */
   public function importTransform(string $name, StorageTransformEvent $event): void {
-    $split = $this->getSplitConfig($name);
+    $split = $this->getSplitConfig($name, $event->getStorage());
     if ($split === NULL) {
       return;
     }

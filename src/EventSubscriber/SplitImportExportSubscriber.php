@@ -5,6 +5,7 @@ namespace Drupal\config_split\EventSubscriber;
 use Drupal\config_split\ConfigSplitManager;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\ImmutableConfig;
+use Drupal\Core\Config\StorageInterface;
 use Drupal\Core\Config\StorageTransformEvent;
 use Drupal\Core\Site\Settings;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -89,7 +90,7 @@ final class SplitImportExportSubscriber implements EventSubscriberInterface {
    *   The transformation event.
    */
   public function importDefaultPriority(StorageTransformEvent $event) {
-    $splits = array_reverse($this->getDefaultPrioritySplitConfigs());
+    $splits = array_reverse($this->getDefaultPrioritySplitConfigs($event->getStorage()));
     foreach ($splits as $split) {
       $this->manager->importTransform($split->get('id'), $event);
     }
@@ -119,8 +120,8 @@ final class SplitImportExportSubscriber implements EventSubscriberInterface {
    * @return \Drupal\Core\Config\ImmutableConfig[]
    *   The default priority configs.
    */
-  protected function getDefaultPrioritySplitConfigs(): array {
-    $names = $this->configFactory->listAll('config_split.config_split.');
+  protected function getDefaultPrioritySplitConfigs(StorageInterface $storage = NULL): array {
+    $names = $this->manager->listAll($storage);
     $explicit = Settings::get('config_split_priorities', []);
     if (is_array($explicit)) {
       // Make sure the explicit ones have the full name.
@@ -134,7 +135,7 @@ final class SplitImportExportSubscriber implements EventSubscriberInterface {
       $names = array_diff($names, $explicit);
     }
 
-    $splits = $this->configFactory->loadMultiple($names);
+    $splits = $this->manager->loadMultiple($names, $storage);
     uasort($splits, function (ImmutableConfig $a, ImmutableConfig $b) {
       return $a->get('weight') <=> $b->get('weight');
     });
